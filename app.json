@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "chatbot-app",
+    "slug": "chatbot-app",
+    "version": "1.0.0",
+    "plugins": [
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow to access your microphone."
+        }
+      ],
+      "expo-secure-store"
+    ]
+  }
+}
