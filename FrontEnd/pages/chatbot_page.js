@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Keyboard, FlatList, StyleSheet, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, ActivityIndicator } from 'react-native';
 import { useTTS } from './hooks/useTTS'; // TTS 훅 import
 import { useSTT } from './hooks/useSTT'; // STT 훅 import
+import axios from 'axios'; // axios import 추가
 
 const ChatbotPage = () => {
   const { speak, stop, isSpeaking } = useTTS();
@@ -59,6 +60,14 @@ const ChatbotPage = () => {
     }
   };
 
+  // STT 결과를 받아와서 inputText에 자동 입력하는 함수
+  const handleRecordingResult = async () => {
+    const result = await handleRecording();
+    if (result) {
+      setInputText(result); // STT 결과를 inputText에 입력
+    }
+  };
+
   const renderMessage = ({ item }) => (
     <View style={[styles.messageContainer, item.sender === 'user' ? styles.userMessage : styles.botMessage]}>
       <Text style={styles.messageText}>{item.text}</Text>
@@ -74,23 +83,27 @@ const ChatbotPage = () => {
   );
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <View style={styles.innerContainer}>
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          renderItem={renderMessage}
-          keyExtractor={(item) => item.id}
-          style={styles.messageList}
-        />
-        {renderTTSControl()}
-        {isLoading && (
-          <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color="#007AFF" />
-            <Text style={styles.loadingText}>처리 중...</Text>
-          </View>
-        )}
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0} // iOS와 Android에 따라 offset 조정
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.innerContainer}>
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            renderItem={renderMessage}
+            keyExtractor={(item) => item.id}
+            style={styles.messageList}
+          />
+          {renderTTSControl()}
+          {isLoading && (
+            <View style={styles.loadingOverlay}>
+              <ActivityIndicator size="large" color="#007AFF" />
+              <Text style={styles.loadingText}>처리 중...</Text>
+            </View>
+          )}
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.textInput}
@@ -102,12 +115,15 @@ const ChatbotPage = () => {
             <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
               <Text style={styles.sendButtonText}>전송</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.micButton, isRecording && styles.micButtonRecording]} onPress={handleRecording}>
+            <TouchableOpacity
+              style={[styles.micButton, isRecording && styles.micButtonRecording]}
+              onPress={handleRecordingResult} // STT 결과 받아오는 함수로 변경
+            >
               <Text style={styles.micButtonText}>{isRecording ? '중지' : '녹음'}</Text>
             </TouchableOpacity>
           </View>
-        </TouchableWithoutFeedback>
-      </View>
+        </View>
+      </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 };
@@ -153,7 +169,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: '#EAEAEA',
     alignItems: 'center',
-    backgroundColor: '#fff',
   },
   textInput: {
     flex: 1,

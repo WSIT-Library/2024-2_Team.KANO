@@ -21,24 +21,24 @@ export const useTTS = () => {
 			setIsSpeaking(true);
 
 			// TTS API로 GET 요청 보내기
-			// const response = await axios.get(`https://api.gaon.xyz/tts`, {
-			// 	params: {
-			// 		action: 'tts',
-			// 		service: 'edgetts',
-			// 		language: selectedVoice,
-			// 		text: text,
-			// 	},
-			// });
-
-			// EdgeTTS가 현재 API 오류나서 임시로 Google TTS 사용
 			const response = await axios.get(`https://api.gaon.xyz/tts`, {
 				params: {
 					action: 'tts',
-					service: 'gtts',
-					language: selectedVoice.substring(0, 2),
+					service: 'edgetts',
+					language: selectedVoice,
 					text: text,
 				},
 			});
+
+			// // EdgeTTS가 현재 API 오류나서 임시로 Google TTS 사용
+			// const response = await axios.get(`https://api.gaon.xyz/tts`, {
+			// 	params: {
+			// 		action: 'tts',
+			// 		service: 'gtts',
+			// 		language: selectedVoice.substring(0, 2),
+			// 		text: text,
+			// 	},
+			// });
 
 			const audioBase64 = response.data.data.audio;
 
