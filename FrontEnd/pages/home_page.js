@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+//home_page.js
+
+import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Image, Alert, Keyboard, Modal, Button } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,7 +9,8 @@ import DatePage from "./date_page";
 import SettingsPage from './Setting_page';
 import * as Speech from "expo-speech";
 import { ProgressBar } from "react-native-paper";
-import Collapsible from "react-native-collapsible";  // Collapsible import
+import Collapsible from "react-native-collapsible";  
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const HomeScreen = () => {
   const [tasks, setTasks] = useState([
@@ -16,16 +19,25 @@ const HomeScreen = () => {
     { id: "3", text: "저녁 식사하기", completed: false, default: true },
   ]);
   const [newTask, setNewTask] = useState("");
-  const [aacVisible, setAacVisible] = useState(false); // AAC 버튼 표시 상태
-  const [accordionCollapsed, setAccordionCollapsed] = useState(true); // 아코디언 상태
-  const [modalVisible, setModalVisible] = useState(false);  // 모달 표시 상태
-  const [newAacText, setNewAacText] = useState("");  // 새로 추가할 AAC 문장
-  const [selectedIcon, setSelectedIcon] = useState("add-circle-outline");  // 기본 아이콘
-  const [customAacButtons, setCustomAacButtons] = useState([]);  // 사용자 커스텀 AAC 버튼들
+  const [aacVisible, setAacVisible] = useState(false);
+  const [accordionCollapsed, setAccordionCollapsed] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [newAacText, setNewAacText] = useState("");
+  const [selectedIcon, setSelectedIcon] = useState("add-circle-outline");
+  const [customAacButtons, setCustomAacButtons] = useState([]);
+  const [username, setUsername] = useState(""); // 사용자 이름 상태 추가
 
-  const maxAacButtons = 5;  // 최대 AAC 버튼 갯수
+  const maxAacButtons = 5;
 
-  // 기존 할일 추가 함수
+  // 사용자 이름을 불러오는 함수
+  useEffect(() => {
+    const fetchUsername = async () => {
+      const storedUsername = await AsyncStorage.getItem("username");
+      setUsername(storedUsername || "사용자");
+    };
+    fetchUsername();
+  }, []);
+
   const addTask = () => {
     if (newTask.trim()) {
       setTasks([
@@ -56,7 +68,6 @@ const HomeScreen = () => {
     );
   };
 
-  // 기본 투두리스트 항목 수정 함수
   const editDefaultTask = (id) => {
     const taskToEdit = tasks.find((task) => task.id === id);
     if (taskToEdit) {
@@ -73,12 +84,11 @@ const HomeScreen = () => {
           }
         },
         "plain-text",
-        taskToEdit.text // 기존 텍스트를 기본값으로 설정
+        taskToEdit.text
       );
     }
   };
 
-  // 달성도를 계산하는 함수
   const calculateCompletionRate = () => {
     if (tasks.length === 0) return 0;
     const completedTasks = tasks.filter((task) => task.completed).length;
@@ -86,10 +96,9 @@ const HomeScreen = () => {
   };
 
   const toggleAacVisibility = () => {
-    setAacVisible(!aacVisible); // AAC 버튼의 표시 상태 토글
+    setAacVisible(!aacVisible);
   };
 
-  // 아코디언 열고 닫기 함수 추가
   const toggleAccordion = () => {
     setAccordionCollapsed(!accordionCollapsed);
   };
@@ -100,9 +109,9 @@ const HomeScreen = () => {
         ...customAacButtons,
         { id: Date.now().toString(), text: newAacText, icon: selectedIcon },
       ]);
-      setNewAacText("");  // 입력 필드 초기화
-      setSelectedIcon("add-circle-outline");  // 아이콘 초기화
-      setModalVisible(false);  // 모달 닫기
+      setNewAacText("");
+      setSelectedIcon("add-circle-outline");
+      setModalVisible(false);
     } else {
       Alert.alert("최대 5개의 버튼만 추가할 수 있습니다.");
     }
@@ -111,7 +120,6 @@ const HomeScreen = () => {
   const deleteCustomAacButton = (id) => {
     setCustomAacButtons(customAacButtons.filter((button) => button.id !== id));
   };
-
 
   const iconOptions = [
     "water-outline",
@@ -138,9 +146,10 @@ const HomeScreen = () => {
         style={styles.logo}
         resizeMode="contain"
       />
-      <Text style={styles.title}>오늘의 할 일</Text>
+      <Text style={styles.title}>
+      <Text style={styles.username}>{username || "사용자"}</Text>님이 오늘의 할 일
+      </Text>
 
-      {/* 입력 박스와 추가 버튼을 가로로 배치 */}
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
@@ -153,7 +162,6 @@ const HomeScreen = () => {
         </TouchableOpacity>
       </View>
 
-      {/* 아코디언 시작 */}
       <TouchableOpacity style={styles.accordionHeader} onPress={toggleAccordion}>
         <Text style={styles.accordionHeaderText}>오늘의 일정</Text>
         <Ionicons
@@ -205,7 +213,6 @@ const HomeScreen = () => {
         />
       </Collapsible>
 
-      {/* 달성도를 표시하는 부분을 FlatList 아래로 이동 */}
       <Text style={styles.completionText}>달성도</Text>
       <ProgressBar
         progress={calculateCompletionRate()}
@@ -213,7 +220,6 @@ const HomeScreen = () => {
         style={styles.progressBar}
       />
 
-      {/* 플로팅 AAC 버튼들 */}
       <View style={styles.aacContainer}>
         <TouchableOpacity
           style={styles.aacButton}
@@ -222,44 +228,37 @@ const HomeScreen = () => {
           <Text style={styles.aacButtonText}>음성도움</Text>
         </TouchableOpacity>
 
-        {/* AAC 버튼이 보일 때만 나머지 버튼 표시 */}
         {aacVisible && (
-  <>
-  {/* 사용자 커스텀 AAC 버튼들 */}
-  {customAacButtons.map((button) => (
-    <View key={button.id} style={styles.aacButtonContainer}>
-      {/* 삭제 버튼을 왼쪽에 배치 */}
-      <TouchableOpacity
-        style={styles.deleteButton}
-        onPress={() => deleteCustomAacButton(button.id)}
-      >
-        <Ionicons name="trash-outline" size={24} color="white" />
-      </TouchableOpacity>
+          <>
+            {customAacButtons.map((button) => (
+              <View key={button.id} style={styles.aacButtonContainer}>
+                <TouchableOpacity
+                  style={styles.deleteButton}
+                  onPress={() => deleteCustomAacButton(button.id)}
+                >
+                  <Ionicons name="trash-outline" size={24} color="white" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.aacButton}
+                  onPress={() => Speech.speak(button.text, { language: "ko" })}
+                >
+                  <Ionicons name={button.icon} size={30} color="white" />
+                  <Text style={styles.aacButtonText}>{button.text}</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
 
-      {/* AAC 버튼 */}
-      <TouchableOpacity
-        style={styles.aacButton}
-        onPress={() => Speech.speak(button.text, { language: "ko" })}
-      >
-        <Ionicons name={button.icon} size={30} color="white" />
-        <Text style={styles.aacButtonText}>{button.text}</Text>
-      </TouchableOpacity>
-    </View>
-  ))}
-
-  {/* 음성버튼 추가 버튼 */}
-  <TouchableOpacity
-    style={styles.aacButton}
-    onPress={() => setModalVisible(true)}
-  >
-    <Ionicons name="add-circle-outline" size={30} color="white" />
-    <Text style={styles.aacButtonText}>버튼 추가</Text>
-  </TouchableOpacity>
-</>
+            <TouchableOpacity
+              style={styles.aacButton}
+              onPress={() => setModalVisible(true)}
+            >
+              <Ionicons name="add-circle-outline" size={30} color="white" />
+              <Text style={styles.aacButtonText}>버튼 추가</Text>
+            </TouchableOpacity>
+          </>
         )}
       </View>
 
-      {/* 음성버튼 추가 모달 */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -269,12 +268,10 @@ const HomeScreen = () => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>새 음성버튼 추가</Text>
-
-            {/* 문장 입력창을 크게 만듦 */}
             <TextInput
               style={styles.textInput}
               placeholder="문장을 입력하세요"
-              placeholderTextColor="#aaa"  // 플레이스홀더 색상 지정
+              placeholderTextColor="#aaa"
               value={newAacText}
               onChangeText={setNewAacText}
             />
@@ -293,21 +290,19 @@ const HomeScreen = () => {
               ))}
             </View>
 
-            {/* 버튼을 가로로 나란히 배치 */}
-          <View style={styles.buttonRow}>
-            <TouchableOpacity
-              style={styles.ModaladdButton}
-              onPress={addCustomAacButton}
-            >
-              <Text style={styles.addButtonText}>추가</Text>
-            </TouchableOpacity>
-              
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.addButtonText}>닫기</Text>
-            </TouchableOpacity>
+            <View style={styles.buttonRow}>
+              <TouchableOpacity
+                style={styles.ModaladdButton}
+                onPress={addCustomAacButton}
+              >
+                <Text style={styles.addButtonText}>추가</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.addButtonText}>닫기</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -330,8 +325,8 @@ const HomePage = () => {
             iconName = focused ? "chatbubble" : "chatbubble-outline";
           } else if (route.name === "Schedule") {
             iconName = focused ? "calendar" : "calendar-outline";
-          } else if (route.name === 'Settings') {
-            iconName = focused ? 'settings' : 'settings-outline';
+          } else if (route.name === "Settings") {
+            iconName = focused ? "settings" : "settings-outline";
           }
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -383,6 +378,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#007AFF",
   },
+  username: {
+    color: "black",  // 사용자 이름 부분만 검정색으로 설정
+    fontSize: 32,
+  },
+
   inputContainer: {
     flexDirection: "row", // 입력 박스와 추가 버튼을 가로로 배치
     alignItems: "center",

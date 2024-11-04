@@ -1,11 +1,10 @@
-// SettingsPage.js
 import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import axios from 'axios';
 import { VoiceContext } from '../Context';
 
-const DEFAULT_VOICE = 'ko-KR-HyunsuNeural';
+const DEFAULT_VOICE = 'ko-KR-InJoonNeural'; // 기본값을 ko-KR-InJoonNeural로 변경
 
 const SettingsPage = () => {
   const { selectedVoice, updateVoice } = useContext(VoiceContext);
@@ -30,16 +29,18 @@ const SettingsPage = () => {
     try {
       const response = await axios.get('https://api.gaon.xyz/tts?action=langlist&service=edgetts');
       if (response.data?.data) {
-        const koVoices = response.data.data.filter(voice => voice.Locale === 'ko-KR');
-        const formattedVoices = koVoices.map(voice => ({
-          label: formatVoiceLabel(voice),
-          value: voice.ShortName
-        }));
-        setItems(formattedVoices);
-        
+        const koVoices = response.data.data
+          .filter(voice => voice.Locale === 'ko-KR' && voice.ShortName !== 'ko-KR-HyunsuNeural') // ko-KR-HyunsuNeural 음성 필터링
+          .map(voice => ({
+            label: formatVoiceLabel(voice),
+            value: voice.ShortName
+          }));
+
+        setItems(koVoices);
+
         // 초기 아이템 설정 후 현재 선택된 값이 유효한지 확인
-        if (!formattedVoices.some(item => item.value === currentValue)) {
-          setCurrentValue(DEFAULT_VOICE);
+        if (!koVoices.some(item => item.value === currentValue)) {
+          setCurrentValue(DEFAULT_VOICE); // 기본값을 ko-KR-InJoonNeural로 설정
         }
       }
     } catch (error) {

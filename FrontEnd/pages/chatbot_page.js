@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Keyboard, FlatList, StyleSheet, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Keyboard, FlatList, StyleSheet, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, ActivityIndicator, Modal } from 'react-native';
 import { useTTS } from './hooks/useTTS'; // TTS 훅 import
 import { useSTT } from './hooks/useSTT'; // STT 훅 import
 import axios from 'axios'; // axios import 추가
+import { Ionicons } from '@expo/vector-icons';
 
 const ChatbotPage = () => {
 	const { speak, stop, isSpeaking } = useTTS();
@@ -15,6 +16,7 @@ const ChatbotPage = () => {
 		},
 	]);
 	const [inputText, setInputText] = useState('');
+	const [modalVisible, setModalVisible] = useState(false);
 	const flatListRef = useRef(null);
 
 	useEffect(() => {
@@ -82,12 +84,30 @@ const ChatbotPage = () => {
 		)
 	);
 
+	const chatRooms = [
+		{ id: '1', name: '1번방' },
+		{ id: '2', name: '2번방' },
+		{ id: '3', name: '3번방' },
+		// 추가 채팅방을 원하면 여기에 더 추가하세요
+	];
+	
+	const toggleModal = () => {
+		setModalVisible(!modalVisible);
+	  };
+
 	return (
 		<KeyboardAvoidingView
 			style={styles.container}
 			behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
 			keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
 		>
+			<View style={styles.appBar}>
+        		<TouchableOpacity onPress={toggleModal}>
+          		<Ionicons name="menu" size={28} color="#fff" />
+        		</TouchableOpacity>
+        		<Text style={styles.appBarTitle}>채팅</Text>
+			</View>
+			
 			<View style={styles.innerContainer}>
 				<FlatList
 					ref={flatListRef}
@@ -105,6 +125,26 @@ const ChatbotPage = () => {
 						<Text style={styles.loadingText}>처리 중...</Text>
 					</View>
 				)}
+
+				{/* 채팅방 리스트 모달 */}
+				<Modal visible={modalVisible} transparent animationType="slide">
+        			<TouchableWithoutFeedback onPress={toggleModal}>
+          				<View style={styles.modalOverlay} />
+        			</TouchableWithoutFeedback>
+        			<View style={styles.modalContent}>
+          				<Text style={styles.modalTitle}>채팅방 목록</Text>
+          				<FlatList
+           					data={chatRooms}
+            				keyExtractor={(item) => item.id}
+            				renderItem={({ item }) => (
+              					<TouchableOpacity style={styles.chatRoomButton} onPress={() => console.log(`${item.name} 선택됨`)}>
+                					<Text style={styles.chatRoomText}>{item.name}</Text>
+              					</TouchableOpacity>
+            				)}
+          				/>
+        			</View>
+      			</Modal>
+
 				<TouchableWithoutFeedback onPress={Keyboard.dismiss}>
 					<View style={styles.inputContainer}>
 						<TextInput
@@ -245,6 +285,50 @@ const styles = StyleSheet.create({
 		fontSize: 14,
 		fontWeight: '600',
 	},
+	appBar: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		backgroundColor: '#007AFF',
+		padding: 15,
+		elevation: 4,
+	 },
+	 appBarTitle: {
+		color: '#fff',
+		fontSize: 18,
+		fontWeight: 'bold',
+		marginLeft: 10,
+	 },
+	 modalOverlay: {
+		flex: 1,
+		backgroundColor: 'rgba(0, 0, 0, 0.5)',
+	 },
+	 modalContent: {
+		position: 'absolute',
+		top: 30,
+		left: 0,
+		width: '70%',
+		height: '100%',
+		backgroundColor: '#fff',
+		padding: 20,
+		elevation: 5,
+	 },
+	 modalTitle: {
+		fontSize: 20,
+		fontWeight: 'bold',
+		marginBottom: 20,
+		color: '#007AFF',
+	 },
+	 chatRoomButton: {
+		padding: 15,
+		backgroundColor: '#007AFF',
+		borderRadius: 10,
+		marginBottom: 10,
+	 },
+	 chatRoomText: {
+		color: '#fff',
+		fontSize: 18,
+		textAlign: 'center',
+	 },
 });
 
 export default ChatbotPage;

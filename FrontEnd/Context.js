@@ -5,7 +5,7 @@ import * as SecureStore from 'expo-secure-store';
 export const VoiceContext = createContext();
 
 const VOICE_STORAGE_KEY = 'selectedVoice';
-const DEFAULT_VOICE = 'ko-KR-HyunsuNeural';
+const DEFAULT_VOICE = 'ko-KR-InJoonNeural';
 
 export const VoiceProvider = ({ children }) => {
   const [selectedVoice, setSelectedVoice] = useState(null);
