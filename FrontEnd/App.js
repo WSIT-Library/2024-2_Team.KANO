@@ -8,6 +8,8 @@ import ChatbotPage from "./pages/chatbot_page";
 import DatePage from "./pages/date_page";
 import LoginPage from "./pages/login_page";
 import SignupPage from "./pages/signup_page";
+import SplashScreenComponent from './pages/splash_page';
+import TutorialPage from "./pages/tutorial_page";
 import { VoiceProvider } from "./Context";
 
 const Stack = createStackNavigator();
@@ -17,7 +19,12 @@ const App = () => {
       // VoiceProvider로 전체 앱을 감싸서 컨텍스트를 모든 컴포넌트에 제공
       <VoiceProvider>
          <NavigationContainer>
-            <Stack.Navigator initialRouteName="Login"> 
+            <Stack.Navigator initialRouteName="Splash"> 
+               <Stack.Screen
+                  name="Splash"
+                  component={SplashScreenComponent}
+                  options={{ headerShown: false }}
+               />
                <Stack.Screen
                   name="Login"
                   component={LoginPage}
@@ -33,6 +40,7 @@ const App = () => {
                   component={HomePage}
                   options={{ headerShown: false }}
                />
+               <Stack.Screen name="Tutorial" component={TutorialPage} options={{ headerShown: false }} />
                <Stack.Screen name="Chatbot" component={ChatbotPage} />
                <Stack.Screen name="Date" component={DatePage} />
             </Stack.Navigator>

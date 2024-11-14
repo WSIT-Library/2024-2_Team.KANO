@@ -24,6 +24,14 @@ def check_password(hashed_password, password):
     """해시된 비밀번호와 입력된 비밀번호를 검증"""
     return bcrypt.checkpw(password.encode('utf-8'), hashed_password)
 
+def generate_unique_uuid(cursor):
+    """UUID 중복 방지를 위해 유일한 UUID 생성"""
+    while True:
+        new_uuid = str(uuid.uuid4())
+        cursor.execute("SELECT * FROM logins WHERE uuid = %s", (new_uuid,))
+        if not cursor.fetchone():  # 중복이 없다면 해당 UUID 사용
+            return new_uuid
+
 @auth_bp.route('/signup', methods=['POST'])
 def signup():
     connection = None  # 초기화
@@ -77,8 +85,8 @@ def login():
             cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
             user = cursor.fetchone()
             if user and check_password(user['password'].encode('utf-8'), password):
-                # UUID 생성 후 logins 테이블에 삽입
-                user_uuid = str(uuid.uuid4())
+                # 유일한 UUID 생성 후 logins 테이블에 삽입
+                user_uuid = generate_unique_uuid(cursor)
                 cursor.execute(
                     "INSERT INTO logins (user_id, uuid) VALUES (%s, %s)",
                     (user['id'], user_uuid)
@@ -95,8 +103,9 @@ def login():
         if connection:
             connection.close()
 
-@auth_bp.route('/logout', methods=['POST'])
-def logout():
+# 유저 UUID값 확인
+@auth_bp.route('/checkuuid', methods=['POST'])
+def check_uuid():
     connection = None  # 초기화
     try:
         data = request.get_json()
@@ -107,14 +116,25 @@ def logout():
 
         connection = get_connection()
         with connection.cursor() as cursor:
-            # logins 테이블에서 uuid로 레코드 삭제
-            cursor.execute("DELETE FROM logins WHERE uuid = %s", (user_uuid,))
-            connection.commit()
-            return create_response(200, "로그아웃 성공")
-    
+            # UUID가 logins 테이블에 있는지 확인
+            cursor.execute("SELECT user_id FROM logins WHERE uuid = %s", (user_uuid,))
+            login_record = cursor.fetchone()
+
+            if not login_record:
+                return create_response(404, "UUID가 존재하지 않습니다.")
+
+            # 유저네임 조회
+            cursor.execute("SELECT username FROM users WHERE id = %s", (login_record['user_id'],))
+            user_info = cursor.fetchone()
+
+            if user_info:
+                return create_response(200, "UUID가 존재하며, 유저네임이 반환되었습니다.", {"username": user_info['username']})
+            else:
+                return create_response(404, "유저 정보를 찾을 수 없습니다.")
+
     except Exception as e:
         print(f"Error occurred: {e}")
-        return create_response(500, f"로그아웃 중 오류가 발생했습니다: {str(e)}")
+        return create_response(500, f"UUID 확인 중 오류가 발생했습니다: {str(e)}")
     finally:
         if connection:
             connection.close()

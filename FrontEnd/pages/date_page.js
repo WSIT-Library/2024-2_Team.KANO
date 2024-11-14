@@ -9,6 +9,7 @@ import {
   Modal,
   TextInput,
 } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar } from "react-native-calendars";
 import * as CalendarAPI from "expo-calendar";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -109,7 +110,7 @@ export default function App() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Text style={styles.header}>캘린더</Text>
       <Calendar
         onDayPress={onDayPress}
@@ -192,7 +193,7 @@ export default function App() {
           </View>
         )}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

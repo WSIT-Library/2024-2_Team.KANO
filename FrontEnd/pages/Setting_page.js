@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import DropDownPicker from 'react-native-dropdown-picker';
 import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
+import { useNavigation } from '@react-navigation/native';
 import { VoiceContext } from '../Context';
 
-const DEFAULT_VOICE = 'ko-KR-InJoonNeural'; // 기본값을 ko-KR-InJoonNeural로 변경
+const DEFAULT_VOICE = 'ko-KR-InJoonNeural';
 
 const SettingsPage = () => {
   const { selectedVoice, updateVoice } = useContext(VoiceContext);
@@ -13,12 +16,12 @@ const SettingsPage = () => {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState([]);
   const [currentValue, setCurrentValue] = useState(selectedVoice || DEFAULT_VOICE);
+  const navigation = useNavigation();
 
   useEffect(() => {
     fetchVoices();
   }, []);
 
-  // selectedVoice가 변경될 때 currentValue 업데이트
   useEffect(() => {
     if (selectedVoice) {
       setCurrentValue(selectedVoice);
@@ -30,7 +33,7 @@ const SettingsPage = () => {
       const response = await axios.get('https://api.gaon.xyz/tts?action=langlist&service=edgetts');
       if (response.data?.data) {
         const koVoices = response.data.data
-          .filter(voice => voice.Locale === 'ko-KR' && voice.ShortName !== 'ko-KR-HyunsuNeural') // ko-KR-HyunsuNeural 음성 필터링
+          .filter(voice => voice.Locale === 'ko-KR' && voice.ShortName !== 'ko-KR-HyunsuNeural')
           .map(voice => ({
             label: formatVoiceLabel(voice),
             value: voice.ShortName
@@ -38,9 +41,8 @@ const SettingsPage = () => {
 
         setItems(koVoices);
 
-        // 초기 아이템 설정 후 현재 선택된 값이 유효한지 확인
         if (!koVoices.some(item => item.value === currentValue)) {
-          setCurrentValue(DEFAULT_VOICE); // 기본값을 ko-KR-InJoonNeural로 설정
+          setCurrentValue(DEFAULT_VOICE);
         }
       }
     } catch (error) {
@@ -58,7 +60,7 @@ const SettingsPage = () => {
   };
 
   const handleValueChange = (value) => {
-    console.log('Selected value:', value); // 디버깅용
+    console.log('Selected value:', value);
     if (value) {
       setCurrentValue(value);
       setIsSaved(false);
@@ -80,16 +82,42 @@ const SettingsPage = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      const userUuid = await SecureStore.getItemAsync("user_uuid");
+      if (!userUuid) {
+        Alert.alert("오류", "로그인 상태가 아닙니다.");
+        return;
+      }
+
+      const response = await axios.post("http://61.81.99.111:5000/auth/logout", { user_uuid: userUuid });
+      
+      if (response.data.StatusCode === 200) {
+        const username = response.data.username; // 서버 응답에서 username 받아오기
+        console.log(`로그아웃 성공 - 유저 이름: ${username}, UUID: ${userUuid}`);
+        
+        await SecureStore.deleteItemAsync("user_uuid");
+        Alert.alert("알림", "로그아웃되었습니다.");
+        navigation.replace("Login");
+      } else {
+        Alert.alert("로그아웃 실패", response.data.message);
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+      Alert.alert("알림", "서버와 연결할 수 없습니다.");
+    }
+  };
+
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Text style={styles.title}>TTS 목소리 변경</Text>
       <View style={styles.pickerContainer}>
         <DropDownPicker
@@ -111,7 +139,7 @@ const SettingsPage = () => {
           zIndexInverse={1000}
         />
       </View>
-      
+
       <TouchableOpacity 
         style={[
           styles.saveButton, 
@@ -125,7 +153,12 @@ const SettingsPage = () => {
           {isSaved ? '저장됨' : '설정 저장'}
         </Text>
       </TouchableOpacity>
-    </View>
+
+      {/* 로그아웃 버튼 추가 */}
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <Text style={styles.logoutButtonText}>로그아웃</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
   );
 };
 
@@ -182,6 +215,19 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  logoutButton: {
+    backgroundColor: '#FF3B30',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  logoutButtonText: {
+    fontSize: 18,
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });
 
