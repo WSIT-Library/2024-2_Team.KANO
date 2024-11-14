@@ -17,6 +17,7 @@ sys.path.append(parent_dir)
 
 from db_config import get_connection
 from utils.response import create_response
+from utils.get_user_id_from_uuid import get_user_id_from_uuid
 
 # .env 파일 로드 및 환경 변수에서 API 키 및 모델명 가져오기
 load_dotenv()
@@ -34,17 +35,6 @@ generation_config = {
 
 # Blueprint 생성
 chat_bp = Blueprint('chat', __name__)
-
-# 공통 유효성 검사 함수
-def get_user_id_from_uuid(user_uuid, connection):
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT user_id FROM logins WHERE uuid = %s", (user_uuid.strip(),))
-            result = cursor.fetchone()
-            return result['user_id'] if result else None
-    except Exception as e:
-        print(f"Error in get_user_id_from_uuid: {str(e)}")
-        return None
 
 def is_valid_chat_for_user(user_id, chat_uuid, connection):
     try:
@@ -68,11 +58,19 @@ def generate_unique_chat_uuid(connection):
         print(f"Error in generate_unique_chat_uuid: {str(e)}")
         return None
 
+# 시스템 프롬프트 로드 함수
+def load_system_prompt():
+    prompt_path = os.path.join(current_dir, 'prompt.md')
+    with open(prompt_path, 'r', encoding='utf-8') as file:
+        return file.read()
+
 # /chat 엔드포인트
 @chat_bp.route('/chat', methods=['GET', 'POST'])
 def chat_route():
     connection = get_connection()
     try:
+        system_prompt = load_system_prompt()
+        
         if request.method == 'GET':
             text, user_uuid, chat_uuid = request.args.get('text'), request.args.get('user_uuid'), request.args.get('chat_uuid')
         elif request.method == 'POST' and request.is_json:
@@ -107,7 +105,7 @@ def chat_route():
 
         # 새 메시지를 chat_history에 추가하고 AI 모델로 응답 생성
         chat_history.append({"role": "user", "parts": text})
-        chat = genai.GenerativeModel(MODEL_NAME).start_chat(history=chat_history)
+        chat = genai.GenerativeModel(model_name=MODEL_NAME, system_instruction=system_prompt).start_chat(history=chat_history)
         response = chat.send_message(text, generation_config=generation_config)
         chat_history.append({"role": "model", "parts": response.text})
 
@@ -126,7 +124,6 @@ def chat_route():
         return create_response(500, f"Internal Server Error: {str(e)}")
     finally:
         connection.close()
-
 
 # /chat/list 엔드포인트
 @chat_bp.route('/chat/list', methods=['POST'])

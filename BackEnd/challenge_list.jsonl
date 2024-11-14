@@ -1,0 +1,50 @@
+{ "id": 1, "name": "첫 출발", "description": "회원가입 및 로그인 성공" }
+{ "id": 2, "name": "일주일의 전사", "description": "7일 연속 로그인 성공" }
+{ "id": 3, "name": "VIP(진)", "description": "30일 연속 로그인 성공" }
+{ "id": 4, "name": "VIP", "description": "90일 연속 로그인 성공" }
+{ "id": 5, "name": "자라나는 새싹", "description": "일정 추가 1회 성공" }
+{ "id": 6, "name": "잎 생성", "description": "일정 추가 5회 성공" }
+{ "id": 7, "name": "뻗어나는 줄기", "description": "일정 추가 10회 성공" }
+{ "id": 8, "name": "개화 전 꽃대", "description": "일정 추가 20회 성공" }
+{ "id": 9, "name": "개화! 꽃 생성", "description": "일정 추가 30회 성공" }
+{ "id": 10, "name": "황금열매 짜잔!", "description": "일정 추가 50회 성공" }
+{ "id": 11, "name": "응애", "description": "오늘의 일정 달성도 100% 1회 달성" }
+{ "id": 12, "name": "아장아장", "description": "오늘의 일정 달성도 100% 5회 달성" }
+{ "id": 13, "name": "도전 왕 초보", "description": "오늘의 일정 달성도 100% 10회 달성" }
+{ "id": 14, "name": "질풍노도", "description": "오늘의 일정 달성도 100% 20회 달성" }
+{ "id": 15, "name": "불타오르네!", "description": "오늘의 일정 달성도 100% 30회 달성" }
+{ "id": 16, "name": "내공 충만", "description": "오늘의 일정 달성도 100% 40회 달성" }
+{ "id": 17, "name": "짬에서 나오는 바이브", "description": "오늘의 일정 달성도 100% 50회 달성" }
+{ "id": 18, "name": "마침표 한 방", "description": "오늘의 일정 달성도 100% 100회 달성" }
+{ "id": 19, "name": "AI 어서오고", "description": "AI 챗봇과의 첫 대화 시작" }
+{ "id": 20, "name": "AI 대화 초보", "description": "AI 챗봇과 한 대화방에서 10번 대화" }
+{ "id": 21, "name": "AI 대화 중수", "description": "AI 챗봇과 한 대화방에서 20번 대화" }
+{ "id": 22, "name": "AI 대화 고수", "description": "AI 챗봇과 한 대화방에서 30번 대화" }
+{ "id": 23, "name": "AI 대화 초고수", "description": "AI 챗봇과 한 대화방에서 50번 대화" }
+{ "id": 24, "name": "대화의 첫걸음", "description": "AI 대화방을 3회 생성" }
+{ "id": 25, "name": "작은 대화의 시작", "description": "AI 대화방을 5회 생성" }
+{ "id": 26, "name": "대화의 재미", "description": "AI 대화방을 10회 생성" }
+{ "id": 27, "name": "수다 중독", "description": "AI 대화방을 15회 생성" }
+{ "id": 28, "name": "소통 마스터", "description": "AI 대화방을 20회 생성" }
+{ "id": 29, "name": "대화의 달인", "description": "AI 대화방을 30회 생성" }
+{ "id": 30, "name": "AI는 내꺼", "description": "AI 대화방을 40회 생성" }
+{ "id": 31, "name": "AI 대화의 신", "description": "AI 대화방을 50회 생성" }
+{ "id": 32, "name": "도움이 필요해", "description": "음성도움(AAC) 버튼을 1개 생성" }
+{ "id": 33, "name": "작은 목소리", "description": "음성도움(AAC) 버튼을 3개 생성" }
+{ "id": 34, "name": "손길이 닿는 도움", "description": "음성도움(AAC) 버튼을 5개 생성" }
+{ "id": 35, "name": "도움의 울림", "description": "음성도움(AAC) 버튼을 7개 생성" }
+{ "id": 36, "name": "도움의 메신저", "description": "음성도움(AAC) 버튼을 10개 생성" }
+{ "id": 37, "name": "응답하는 목소리", "description": "음성도움(AAC) 버튼을 15개 생성" }
+{ "id": 38, "name": "음성 지원 전문가", "description": "음성도움(AAC) 버튼을 20개 생성" }
+{ "id": 39, "name": "도움의 대가", "description": "음성도움(AAC) 버튼을 30개 생성" }
+{ "id": 40, "name": "어색합니다", "description": "AI 챗봇 대화를 3일 연속 사용" }
+{ "id": 41, "name": "친해지는 중", "description": "AI 챗봇 대화를 5일 연속 사용" }
+{ "id": 42, "name": "일상 속 AI", "description": "AI 챗봇 대화를 10일 연속 사용" }
+{ "id": 43, "name": "심심함은 챗봇과", "description": "AI 챗봇 대화를 15일 연속 사용" }
+{ "id": 44, "name": "절친", "description": "AI 챗봇 대화를 20일 연속 사용" }
+{ "id": 45, "name": "가족", "description": "AI 챗봇 대화를 30일 연속 사용" }
+{ "id": 46, "name": "첫 약속", "description": "캘린더 일정 추가 1회" }
+{ "id": 47, "name": "일정을 채우다", "description": "캘린더 일정 추가 10회" }
+{ "id": 48, "name": "꼼꼼한 계획자", "description": "캘린더 일정 추가 20회" }
+{ "id": 49, "name": "스케줄 마스터", "description": "캘린더 일정 추가 30회" }
+{ "id": 50, "name": "기습 숭배", "description": "Anti Barrier앱 사용한지 1년" }

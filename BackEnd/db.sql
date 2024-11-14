@@ -27,3 +27,22 @@ CREATE TABLE chats (
     -- 외래키 설정
     CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
+-- ChallengeList 테이블 생성
+CREATE TABLE ChallengeList (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    challenge_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- UserActions 테이블 생성
+CREATE TABLE UserActions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    action_id INT NOT NULL,
+    doing_action TEXT NOT NULL,
+    time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);

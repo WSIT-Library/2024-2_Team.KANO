@@ -6,17 +6,18 @@ import { useSTT } from './hooks/useSTT';
 import axios from 'axios';
 import { Ionicons } from '@expo/vector-icons';
 import * as SecureStore from "expo-secure-store";
+import Markdown from 'react-native-markdown-display';
 
 // 날짜 포맷 함수
 const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = (`0${date.getMonth() + 1}`).slice(-2);
-    const day = (`0${date.getDate()}`).slice(-2);
-    const hours = (`0${date.getHours()}`).slice(-2);
-    const minutes = (`0${date.getMinutes()}`).slice(-2);
-    const seconds = (`0${date.getSeconds()}`).slice(-2);
-    return `${year}년 ${month}월 ${day}일 ${hours}시 ${minutes}분 ${seconds}초`;
+	const date = new Date(dateString);
+	const year = date.getFullYear();
+	const month = (`0${date.getMonth() + 1}`).slice(-2);
+	const day = (`0${date.getDate()}`).slice(-2);
+	const hours = (`0${date.getHours()}`).slice(-2);
+	const minutes = (`0${date.getMinutes()}`).slice(-2);
+	const seconds = (`0${date.getSeconds()}`).slice(-2);
+	return `${year}년 ${month}월 ${day}일 ${hours}시 ${minutes}분 ${seconds}초`;
 };
 
 const ChatbotPage = () => {
@@ -102,6 +103,8 @@ const ChatbotPage = () => {
 	};
 
 	const sendMessage = async () => {
+		Keyboard.dismiss(); // 키보드 내리기
+
 		if (inputText.trim()) {
 			const newMessage = { id: Date.now().toString(), text: inputText, sender: 'user' };
 			setMessages([...messages, newMessage]);
@@ -111,9 +114,19 @@ const ChatbotPage = () => {
 				const storedUuid = await SecureStore.getItemAsync("user_uuid");
 				const response = await axios.post('http://61.81.99.111:5000/chat', { text: inputText, user_uuid: storedUuid, chat_uuid: selectedChat });
 				if (response.data && response.data.data && response.data.data.response) {
-					const botResponse = { id: Date.now().toString(), text: response.data.data.response, sender: 'bot' };
+					const botResponseText = response.data.data.response;
+					const botResponse = { id: Date.now().toString(), text: '', sender: 'bot' }; // 초기 텍스트는 빈 문자열로 설정
 					setMessages((prevMessages) => [...prevMessages, botResponse]);
-					speak(response.data.data.response);
+
+					// 타이핑 효과 적용
+					typingEffect(botResponseText, (updatedText) => {
+						setMessages((prevMessages) =>
+							prevMessages.map((msg) => (msg.id === botResponse.id ? { ...msg, text: updatedText } : msg))
+						);
+					});
+
+					// TTS로 출력
+					speak(botResponseText);
 				}
 			} catch (error) {
 				console.error('메시지 전송 오류:', error);
@@ -121,13 +134,42 @@ const ChatbotPage = () => {
 		}
 	};
 
+	// handleRecording 호출 후 STT 결과를 inputText로 설정
+	const handleMicPress = async () => {
+		const sttResult = await handleRecording();
+		if (sttResult) {
+			setInputText(sttResult); // STT 결과를 inputText에 설정
+		}
+	};
+
+	const typingEffect = (text, callback) => {
+		let index = 0;
+		const intervalId = setInterval(() => {
+			callback(text.slice(0, index + 1));
+			index++;
+			if (index === text.length) {
+				clearInterval(intervalId);
+			}
+		}, 50); // 각 글자 사이의 지연 시간 (50ms)
+	};
+
 	useEffect(() => {
 		if (modalVisible) loadChatRooms();
 	}, [modalVisible]);
 
 	const renderMessage = ({ item }) => (
-		<View style={[styles.messageContainer, item.sender === 'user' ? styles.userMessage : styles.botMessage]}>
-			<Text style={styles.messageText}>{item.text}</Text>
+		<View
+			key={item.id} // 직접 key 속성을 추가
+			style={[
+				styles.messageContainer,
+				item.sender === 'user' ? styles.userMessage : styles.botMessage
+			]}
+		>
+			{item.sender === 'bot' ? (
+				<Markdown style={styles.messageText}>{item.text}</Markdown>
+			) : (
+				<Text style={styles.messageText}>{item.text}</Text>
+			)}
 		</View>
 	);
 
@@ -149,7 +191,7 @@ const ChatbotPage = () => {
 						ref={flatListRef}
 						data={messages}
 						renderItem={renderMessage}
-						keyExtractor={(item) => item.id}
+						keyExtractor={(item) => item.id} // 이 부분을 통해 각 요소에 고유한 키 할당
 						style={styles.messageList}
 						onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
 						onLayout={() => flatListRef.current?.scrollToEnd()}
@@ -177,12 +219,13 @@ const ChatbotPage = () => {
 								data={chatRooms}
 								keyExtractor={(item) => item.chat_uuid}
 								renderItem={({ item }) => (
-									<View>
+									<View style={styles.chatRoomContainer}>
 										<TouchableOpacity style={styles.chatRoomButton} onPress={() => loadChatHistory(item.chat_uuid)}>
-											<Text style={styles.chatRoomText}>{item.last_message_at}</Text>
+											<Text style={styles.chatRoomTitle}>{item.first_message}</Text>
+											<Text style={styles.chatRoomDate}>{item.created_at}</Text>
 										</TouchableOpacity>
-										<TouchableOpacity onPress={() => deleteChatRoom(item.chat_uuid)}>
-											<Text style={{ color: 'red', textAlign: 'center' }}>삭제</Text>
+										<TouchableOpacity onPress={() => deleteChatRoom(item.chat_uuid)} style={styles.deleteButton}>
+											<Ionicons name="trash" size={24} color="red" />
 										</TouchableOpacity>
 									</View>
 								)}
@@ -196,7 +239,7 @@ const ChatbotPage = () => {
 							<TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
 								<Text style={styles.sendButtonText}>전송</Text>
 							</TouchableOpacity>
-							<TouchableOpacity style={[styles.micButton, isRecording && styles.micButtonRecording]} onPress={handleRecording}>
+							<TouchableOpacity style={[styles.micButton, isRecording && styles.micButtonRecording]} onPress={handleMicPress}>
 								<Text style={styles.micButtonText}>{isRecording ? '중지' : '녹음'}</Text>
 							</TouchableOpacity>
 						</View>
@@ -328,33 +371,56 @@ const styles = StyleSheet.create({
 		backgroundColor: '#007AFF',
 		padding: 15,
 		elevation: 4,
-	 },
-	 appBarTitle: {
+		justifyContent: 'space-between',
+	},
+	appBarTitle: {
 		color: '#fff',
 		fontSize: 18,
 		fontWeight: 'bold',
 		marginLeft: 10,
-	 },
-	 modalOverlay: {
+	},
+	modalOverlay: {
 		flex: 1,
 		backgroundColor: 'rgba(0, 0, 0, 0.5)',
-	 },
-	 modalTitle: {
+	},
+	modalTitle: {
 		fontSize: 20,
 		fontWeight: 'bold',
 		marginBottom: 20,
 		color: '#007AFF',
-	 },
-	 chatRoomButton: {
+	},
+	chatRoomContainer: {
+		paddingVertical: 8,
+		borderBottomWidth: 1,
+		borderBottomColor: '#EAEAEA',
+	},
+	chatRoomButton: {
 		padding: 15,
-		backgroundColor: '#007AFF',
+		backgroundColor: '#b5eaf5',
 		borderRadius: 10,
 		marginBottom: 10,
-	 },
-	 chatRoomText: {
+	},
+	chatRoomTitle: {
+		color: '#000',
+		fontSize: 18,
+		fontWeight: 'bold',
+	},
+	chatRoomDate: {
+		color: '#000',
+		fontSize: 14,
+		marginTop: 5,
+		opacity: 0.8,
+	},
+	chatRoomText: {
 		color: '#fff',
 		fontSize: 18,
 		textAlign: 'center',
+	},
+	deleteButton: {
+		position: 'absolute',
+		right: 10,
+		top: '50%',
+		transform: [{ translateY: -12 }],
 	},
 	modalContent: {
 		position: 'absolute',
@@ -365,7 +431,7 @@ const styles = StyleSheet.create({
 		backgroundColor: '#fff',
 		padding: 20,
 		elevation: 5,
-	 },
+	},
 });
 
 export default ChatbotPage;
