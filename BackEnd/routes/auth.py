@@ -138,3 +138,27 @@ def check_uuid():
     finally:
         if connection:
             connection.close()
+
+@auth_bp.route('/logout', methods=['POST'])
+def logout():
+    connection = None  # 초기화
+    try:
+        data = request.get_json()
+        user_uuid = data.get('user_uuid')
+
+        if not user_uuid:
+            return create_response(400, "UUID는 필수입니다.")
+
+        connection = get_connection()
+        with connection.cursor() as cursor:
+            # logins 테이블에서 uuid로 레코드 삭제
+            cursor.execute("DELETE FROM logins WHERE uuid = %s", (user_uuid,))
+            connection.commit()
+            return create_response(200, "로그아웃 성공")
+
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        return create_response(500, f"로그아웃 중 오류가 발생했습니다: {str(e)}")
+    finally:
+        if connection:
+            connection.close()
