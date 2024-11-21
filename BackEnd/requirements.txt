@@ -3,4 +3,3 @@ flask_cors
 bcrypt
 python-dotenv
 google-generativeai
-pymysql

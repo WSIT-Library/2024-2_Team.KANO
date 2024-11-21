@@ -2,6 +2,12 @@ from flask import Blueprint, request
 import os
 import sys
 import traceback
+
+# ../db 경로를 sys.path에 추가하여 db_config 모듈을 불러올 수 있도록 설정
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.join(current_dir, '..', 'db')
+sys.path.append(parent_dir)
+
 from db_config import get_connection
 from utils.response import create_response
 from utils.get_user_id_from_uuid import get_user_id_from_uuid
