@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert, Keyb
 import { useNavigation } from "@react-navigation/native";
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
+import { DOMAIN, TIMEOUT } from "../utils/service_info"; // 필요한 변수만 가져오기
 
 const LoginPage = () => {
   const [username, setUsername] = useState("");
@@ -15,9 +16,7 @@ const LoginPage = () => {
 
       if (storedUuid) {
         try {
-          const response = await axios.post("http://61.81.99.111:5000/auth/checkuuid", {
-            user_uuid: storedUuid,
-          });
+          const response = await axios.post(`${DOMAIN}/auth/checkuuid`, {user_uuid: storedUuid,}, { timeout: TIMEOUT }); // DOMAIN, TIMEOUT 사용
 
           const data = response.data;
           if (data.StatusCode === 200) {
@@ -40,10 +39,7 @@ const LoginPage = () => {
   const handleLogin = async () => {
     if (username.trim() && password.trim()) {
       try {
-        const response = await axios.post("http://61.81.99.111:5000/auth/login", {
-          username,
-          password,
-        });
+        const response = await axios.post(`${DOMAIN}/auth/login`, {username, password,}, { timeout: TIMEOUT }); // DOMAIN, TIMEOUT 사용
 
         const data = response.data;
 

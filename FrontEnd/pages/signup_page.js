@@ -21,11 +21,7 @@ const SignupPage = () => {
     }
 
     try {
-      const response = await axios.post("http://61.81.99.111:5000/auth/signup", {
-        username,
-        password,
-      });
-
+      const response = await axios.post(`${DOMAIN}/auth/signup`, {username, password,}, { timeout: TIMEOUT }); // DOMAIN, TIMEOUT 사용
       const data = response.data;
 
       if (data.StatusCode === 201) {

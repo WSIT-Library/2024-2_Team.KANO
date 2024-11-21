@@ -6,6 +6,7 @@ import ChatbotPage from "./chatbot_page";
 import DatePage from "./date_page";
 import SettingsPage from './Setting_page';
 import HomeScreen from './home_screen';
+import WeatherPage from './weather_page';
 
 const Tab = createBottomTabNavigator();
 
@@ -21,6 +22,8 @@ const HomePage = () => {
                         iconName = focused ? "chatbubble" : "chatbubble-outline";
                     } else if (route.name === "Schedule") {
                         iconName = focused ? "calendar" : "calendar-outline";
+                    } else if (route.name === "Weather") {
+                        iconName = focused ? "cloud" : "cloud-outline";
                     } else if (route.name === "Settings") {
                         iconName = focused ? "settings" : "settings-outline";
                     }
@@ -45,6 +48,11 @@ const HomePage = () => {
                 name="Schedule"
                 component={DatePage}
                 options={{ title: "일정 관리" }}
+            />
+            <Tab.Screen
+                name="Weather"
+                component={WeatherPage}
+                options={{ title: "날씨" }}
             />
             <Tab.Screen
                 name="Settings"

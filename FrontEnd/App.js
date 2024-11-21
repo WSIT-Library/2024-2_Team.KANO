@@ -1,11 +1,13 @@
 // App.js
 
+import 'react-native-gesture-handler';
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import HomePage from "./pages/home_page";
 import ChatbotPage from "./pages/chatbot_page";
 import DatePage from "./pages/date_page";
+import CalendarPage from "./pages/date_page/CalendarPage";
 import LoginPage from "./pages/login_page";
 import SignupPage from "./pages/signup_page";
 import SplashScreenComponent from './pages/splash_page';
@@ -43,6 +45,7 @@ const App = () => {
                <Stack.Screen name="Tutorial" component={TutorialPage} options={{ headerShown: false }} />
                <Stack.Screen name="Chatbot" component={ChatbotPage} />
                <Stack.Screen name="Date" component={DatePage} />
+               <Stack.Screen name="CalendarPage" component={CalendarPage} />
             </Stack.Navigator>
          </NavigationContainer>
       </VoiceProvider>
