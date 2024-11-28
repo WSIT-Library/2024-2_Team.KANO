@@ -3,7 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert, Keyb
 import { useNavigation } from "@react-navigation/native";
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
-import { DOMAIN, TIMEOUT } from "../utils/service_info"; // 필요한 변수만 가져오기
+import { LinearGradient } from "expo-linear-gradient"; // LinearGradient 추가
+import { DOMAIN, TIMEOUT } from "../utils/service_info";
 
 const LoginPage = () => {
   const [username, setUsername] = useState("");
@@ -16,7 +17,7 @@ const LoginPage = () => {
 
       if (storedUuid) {
         try {
-          const response = await axios.post(`${DOMAIN}/auth/checkuuid`, {user_uuid: storedUuid,}, { timeout: TIMEOUT }); // DOMAIN, TIMEOUT 사용
+          const response = await axios.post(`${DOMAIN}/auth/checkuuid`, { user_uuid: storedUuid }, { timeout: TIMEOUT });
 
           const data = response.data;
           if (data.StatusCode === 200) {
@@ -39,7 +40,7 @@ const LoginPage = () => {
   const handleLogin = async () => {
     if (username.trim() && password.trim()) {
       try {
-        const response = await axios.post(`${DOMAIN}/auth/login`, {username, password,}, { timeout: TIMEOUT }); // DOMAIN, TIMEOUT 사용
+        const response = await axios.post(`${DOMAIN}/auth/login`, { username, password }, { timeout: TIMEOUT });
 
         const data = response.data;
 
@@ -75,40 +76,45 @@ const LoginPage = () => {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : -200}
       >
-        <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
-          <Image
-            source={require("../assets/logo.png")}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <Text style={styles.title}>LOGIN</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="사용자 이름"
-            placeholderTextColor="#888"
-            value={username}
-            onChangeText={setUsername}
-            returnKeyType="next"
-            onSubmitEditing={() => passwordInputRef.current.focus()}
-          />
-          <TextInput
-            ref={(input) => (passwordInputRef = input)}
-            style={styles.input}
-            placeholder="비밀번호"
-            placeholderTextColor="#888"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-            returnKeyType="done"
-            onSubmitEditing={handleLogin}
-          />
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>로그인</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
-            <Text style={styles.link}>회원가입</Text>
-          </TouchableOpacity>
-        </ScrollView>
+        <LinearGradient
+          colors={["#E8DFF5", "#F5FFFA"]} // 그라데이션 색상
+          style={styles.gradient}
+        >
+          <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+            <Image
+              source={require("../assets/logo.png")}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+            <Text style={styles.title}>LOGIN</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="사용자 이름"
+              placeholderTextColor="#888"
+              value={username}
+              onChangeText={setUsername}
+              returnKeyType="next"
+              onSubmitEditing={() => passwordInputRef.current.focus()}
+            />
+            <TextInput
+              ref={(input) => (passwordInputRef = input)}
+              style={styles.input}
+              placeholder="비밀번호"
+              placeholderTextColor="#888"
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+              returnKeyType="done"
+              onSubmitEditing={handleLogin}
+            />
+            <TouchableOpacity style={styles.button} onPress={handleLogin}>
+              <Text style={styles.buttonText}>로그인</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
+              <Text style={styles.link}>회원가입</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </LinearGradient>
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );
@@ -117,7 +123,9 @@ const LoginPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#e6f7ff",
+  },
+  gradient: {
+    flex: 1,
   },
   scrollContainer: {
     flexGrow: 1,
@@ -134,7 +142,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "bold",
     textAlign: "center",
-    color: "#007AFF",
+    color: "#000",
     marginBottom: 20,
   },
   input: {

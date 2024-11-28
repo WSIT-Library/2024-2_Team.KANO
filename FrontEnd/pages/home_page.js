@@ -2,9 +2,9 @@
 import React from 'react';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
-import ChatbotPage from "./chatbot_page";
-import DatePage from "./date_page";
-import SettingsPage from './Setting_page';
+import ChatbotPage from "./chatbot_page/index";
+import DatePage from "./date_page/index";
+import SettingsPage from './Setting_page/index';
 import HomeScreen from './home_screen';
 import WeatherPage from './weather_page';
 

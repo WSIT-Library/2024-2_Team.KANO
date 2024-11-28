@@ -7,7 +7,7 @@ import axios from 'axios';
 import { Ionicons } from '@expo/vector-icons';
 import * as SecureStore from "expo-secure-store";
 import Markdown from 'react-native-markdown-display';
-import { DOMAIN, TIMEOUT } from "../../utils/service_info";
+import Toast from 'react-native-toast-message';
 
 // 날짜 포맷 함수
 const formatDate = (dateString) => {
@@ -56,7 +56,7 @@ const ChatbotPage = () => {
 	const loadChatRooms = async () => {
 		try {
 			const storedUuid = await SecureStore.getItemAsync("user_uuid");
-			const response = await axios.post(`${DOMAIN}/chat/list`, { user_uuid: storedUuid }, { timeout: TIMEOUT }); // DOMAIN, TIMEOUT 사용
+			const response = await axios.post('http://61.81.99.111:5000/chat/list', { user_uuid: storedUuid });
 
 			if (response.data.StatusCode === 200) {
 				const chats = response.data.data.chats.map((chat) => ({
@@ -73,7 +73,7 @@ const ChatbotPage = () => {
 	const loadChatHistory = async (chat_uuid) => {
 		try {
 			const storedUuid = await SecureStore.getItemAsync("user_uuid");
-			const response = await axios.post(`${DOMAIN}/chat/detail`, { user_uuid: storedUuid, chat_uuid }, { timeout: TIMEOUT }); // DOMAIN, TIMEOUT 사용
+			const response = await axios.post('http://61.81.99.111:5000/chat/detail', { user_uuid: storedUuid, chat_uuid });
 			if (response.data.StatusCode === 200) {
 				setMessages(response.data.data.chat_history.map((item, index) => ({
 					id: index.toString(),
@@ -88,23 +88,33 @@ const ChatbotPage = () => {
 	};
 
 	const addChatRoom = async () => {
-		setMessages([{ id: '1', text: '새로운 채팅을 시작합니다.', sender: 'bot' }]);
+		setMessages([{ id: '1', text: '원하시는 상황을 입력해주세요.', sender: 'bot' }]);
 		setSelectedChat(null);
+		Toast.show({
+			type: 'success',
+			text1: '채팅방 생성',
+			text2: '새로운 채팅방이 생성되었습니다.',
+		});
 	};
 
 	const deleteChatRoom = async (chat_uuid) => {
 		try {
 			const storedUuid = await SecureStore.getItemAsync("user_uuid");
-			await axios.post(`${DOMAIN}/chat/delete`, { user_uuid: storedUuid, chat_uuid }, { timeout: TIMEOUT }); // DOMAIN, TIMEOUT 사용
+			await axios.post('http://61.81.99.111:5000/chat/delete', { user_uuid: storedUuid, chat_uuid });
 			loadChatRooms();
-			setMessages([{ id: '1', text: '채팅방이 삭제되었습니다.', sender: 'bot' }]);
+			setMessages([{ id: '1', text: '원하시는 상황을 입력해주세요.', sender: 'bot' }]);
+			Toast.show({
+				type: 'error',
+				text1: '채팅방 삭제',
+				text2: '채팅방이 삭제되었습니다.',
+			});
 		} catch (error) {
 			console.error('채팅방 삭제 오류:', error);
 		}
 	};
 
 	const sendMessage = async () => {
-		Keyboard.dismiss(); // 키보드 내리기
+		Keyboard.dismiss();
 
 		if (inputText.trim()) {
 			const newMessage = { id: Date.now().toString(), text: inputText, sender: 'user' };
@@ -113,20 +123,18 @@ const ChatbotPage = () => {
 
 			try {
 				const storedUuid = await SecureStore.getItemAsync("user_uuid");
-				const response = await axios.post(`${DOMAIN}/chat`, { text: inputText, user_uuid: storedUuid, chat_uuid: selectedChat }, { timeout: TIMEOUT }); // DOMAIN, TIMEOUT 사용
+				const response = await axios.post('http://61.81.99.111:5000/chat', { text: inputText, user_uuid: storedUuid, chat_uuid: selectedChat });
 				if (response.data && response.data.data && response.data.data.response) {
 					const botResponseText = response.data.data.response;
-					const botResponse = { id: Date.now().toString(), text: '', sender: 'bot' }; // 초기 텍스트는 빈 문자열로 설정
+					const botResponse = { id: Date.now().toString(), text: '', sender: 'bot' };
 					setMessages((prevMessages) => [...prevMessages, botResponse]);
 
-					// 타이핑 효과 적용
 					typingEffect(botResponseText, (updatedText) => {
 						setMessages((prevMessages) =>
 							prevMessages.map((msg) => (msg.id === botResponse.id ? { ...msg, text: updatedText } : msg))
 						);
 					});
 
-					// TTS로 출력
 					speak(botResponseText);
 				}
 			} catch (error) {
@@ -135,11 +143,10 @@ const ChatbotPage = () => {
 		}
 	};
 
-	// handleRecording 호출 후 STT 결과를 inputText로 설정
 	const handleMicPress = async () => {
 		const sttResult = await handleRecording();
 		if (sttResult) {
-			setInputText(sttResult); // STT 결과를 inputText에 설정
+			setInputText(sttResult);
 		}
 	};
 
@@ -151,7 +158,7 @@ const ChatbotPage = () => {
 			if (index === text.length) {
 				clearInterval(intervalId);
 			}
-		}, 50); // 각 글자 사이의 지연 시간 (50ms)
+		}, 50);
 	};
 
 	useEffect(() => {
@@ -160,7 +167,7 @@ const ChatbotPage = () => {
 
 	const renderMessage = ({ item }) => (
 		<View
-			key={item.id} // 직접 key 속성을 추가
+			key={item.id}
 			style={[
 				styles.messageContainer,
 				item.sender === 'user' ? styles.userMessage : styles.botMessage
@@ -176,6 +183,7 @@ const ChatbotPage = () => {
 
 	return (
 		<SafeAreaView style={styles.container}>
+			<Toast />
 			<KeyboardAvoidingView style={styles.innerContainer} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
 				<View style={styles.appBar}>
 					<TouchableOpacity onPress={toggleModal}>
@@ -192,7 +200,7 @@ const ChatbotPage = () => {
 						ref={flatListRef}
 						data={messages}
 						renderItem={renderMessage}
-						keyExtractor={(item) => item.id} // 이 부분을 통해 각 요소에 고유한 키 할당
+						keyExtractor={(item) => item.id}
 						style={styles.messageList}
 						onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
 						onLayout={() => flatListRef.current?.scrollToEnd()}
@@ -209,7 +217,6 @@ const ChatbotPage = () => {
 						</View>
 					)}
 
-					{/* 채팅방 리스트 모달 */}
 					<Modal visible={modalVisible} transparent animationType="none">
 						<TouchableWithoutFeedback onPress={toggleModal}>
 							<View style={styles.modalOverlay} />
@@ -373,6 +380,7 @@ const styles = StyleSheet.create({
 		padding: 15,
 		elevation: 4,
 		justifyContent: 'space-between',
+		zIndex: -9,
 	},
 	appBarTitle: {
 		color: '#fff',
@@ -414,7 +422,7 @@ const styles = StyleSheet.create({
 	},
 	chatRoomText: {
 		color: '#fff',
-		fontSize: 18,
+		fontSize: 20,
 		textAlign: 'center',
 	},
 	deleteButton: {

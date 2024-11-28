@@ -9,12 +9,12 @@ const Tab = createMaterialTopTabNavigator();
 export default function MainApp() {
 	return (
 		<SafeAreaProvider>
-			<SafeAreaView style={{ flex: 1, backgroundColor: "#007AFF" }}>
+			<SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
 					<Tab.Navigator
 						screenOptions={{
-							tabBarStyle: { backgroundColor: "#007AFF" },
-							tabBarLabelStyle: { fontSize: 14, color: "white" },
-							tabBarIndicatorStyle: { backgroundColor: "white" },
+							tabBarStyle: { backgroundColor: "#fff" },
+							tabBarLabelStyle: { fontSize: 14, color: "black" },
+							tabBarIndicatorStyle: { backgroundColor: "black" },
 						}}
 					>
 						<Tab.Screen name="캘린더" component={CalendarPage} />

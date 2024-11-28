@@ -32,6 +32,7 @@ def generate_unique_uuid(cursor):
         if not cursor.fetchone():  # 중복이 없다면 해당 UUID 사용
             return new_uuid
 
+# 회원가입
 @auth_bp.route('/signup', methods=['POST'])
 def signup():
     connection = None  # 초기화
@@ -39,10 +40,8 @@ def signup():
         data = request.get_json()
         username = data.get('username')
         password = data.get('password')
-
         if not username or not password:
             return create_response(400, "사용자 이름과 비밀번호는 필수입니다.")
-
         connection = get_connection()
         with connection.cursor() as cursor:
             # 사용자 이름이 이미 존재하는지 확인
@@ -50,7 +49,6 @@ def signup():
             existing_user = cursor.fetchone()
             if existing_user:
                 return create_response(400, "이미 존재하는 사용자 이름입니다.")
-
             # 비밀번호를 bcrypt 방식으로 해싱 후 저장
             hashed_password = hash_password(password)
             cursor.execute(
@@ -58,7 +56,6 @@ def signup():
                 (username, hashed_password)
             )
             connection.commit()
-
         return create_response(201, "회원가입 성공")
     
     except Exception as e:
@@ -68,6 +65,7 @@ def signup():
         if connection:
             connection.close()
 
+# 로그인
 @auth_bp.route('/login', methods=['POST'])
 def login():
     connection = None  # 초기화
@@ -102,6 +100,30 @@ def login():
     finally:
         if connection:
             connection.close()
+
+# 로그아웃
+@auth_bp.route('/logout', methods=['POST'])
+def logout():
+    connection = None  # 초기화
+    try:
+        data = request.get_json()
+        user_uuid = data.get('user_uuid')
+        if not user_uuid:
+            return create_response(400, "UUID는 필수입니다.")
+        connection = get_connection()
+        with connection.cursor() as cursor:
+            # logins 테이블에서 uuid로 레코드 삭제
+            cursor.execute("DELETE FROM logins WHERE uuid = %s", (user_uuid,))
+            connection.commit()
+            return create_response(200, "로그아웃 성공")
+    
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        return create_response(500, f"로그아웃 중 오류가 발생했습니다: {str(e)}")
+    finally:
+        if connection:
+            connection.close()
+
 
 # 유저 UUID값 확인
 @auth_bp.route('/checkuuid', methods=['POST'])

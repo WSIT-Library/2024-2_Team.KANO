@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert, Keyboard } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Keyboard } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Collapsible from "react-native-collapsible";
 import * as Progress from "react-native-progress"; // 원형 그래프 사용
+import { LinearGradient } from "expo-linear-gradient"; // LinearGradient 추가
 
 const TodoList = () => {
     const [tasks, setTasks] = useState([
@@ -60,104 +61,110 @@ const TodoList = () => {
     const completionRate = calculateCompletionRate();
 
     return (
-        <View style={styles.container}>
-            {/* "오늘의 할 일" 문구 */}
-            <Text style={styles.headingText}>오늘의 할 일</Text>
+        <LinearGradient colors={["#E8DFF5", "#F5FFFA"]} style={styles.gradient}>
+            <View style={styles.container}>
+                {/* "오늘의 할 일" 문구 */}
+                <Text style={styles.headingText}>오늘의 할 일</Text>
 
-            {/* 입력 영역 */}
-            <View style={styles.inputContainer}>
-                <TextInput
-                    style={styles.input}
-                    placeholder="할 일을 입력하세요"
-                    value={newTask}
-                    onChangeText={setNewTask}
-                />
-                <TouchableOpacity style={styles.addButton} onPress={addTask}>
-                    <Text style={styles.addButtonText}>추가</Text>
+                {/* 입력 영역 */}
+                <View style={styles.inputContainer}>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="할 일을 입력하세요"
+                        value={newTask}
+                        onChangeText={setNewTask}
+                    />
+                    <TouchableOpacity style={styles.addButton} onPress={addTask}>
+                        <Text style={styles.addButtonText}>추가</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* 아코디언 헤더 */}
+                <TouchableOpacity style={styles.accordionHeader} onPress={toggleAccordion}>
+                    <Text style={styles.accordionHeaderText}>오늘의 일정</Text>
+                    <Ionicons
+                        name={accordionCollapsed ? "chevron-down" : "chevron-up"}
+                        size={24}
+                        color="#007AFF"
+                    />
                 </TouchableOpacity>
-            </View>
 
-            {/* 아코디언 헤더 */}
-            <TouchableOpacity style={styles.accordionHeader} onPress={toggleAccordion}>
-                <Text style={styles.accordionHeaderText}>오늘의 일정</Text>
-                <Ionicons
-                    name={accordionCollapsed ? "chevron-down" : "chevron-up"}
-                    size={24}
-                    color="#007AFF"
-                />
-            </TouchableOpacity>
-
-            {/* 아코디언 내용 */}
-            <Collapsible collapsed={accordionCollapsed}>
-                <FlatList
-                    data={tasks}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => (
-                        <View
-                            style={[
-                                styles.taskItem,
-                                item.default ? styles.defaultTask : styles.userTask,
-                            ]}
-                        >
-                            <TouchableOpacity onPress={() => toggleTaskCompletion(item.id)}>
-                                <Ionicons
-                                    name={
-                                        item.completed ? "checkmark-circle" : "radio-button-off"
-                                    }
-                                    size={24}
-                                    color={item.completed ? "green" : "gray"}
-                                />
-                            </TouchableOpacity>
-                            <Text
+                {/* 아코디언 내용 */}
+                <Collapsible collapsed={accordionCollapsed}>
+                    <FlatList
+                        data={tasks}
+                        keyExtractor={(item) => item.id}
+                        renderItem={({ item }) => (
+                            <View
                                 style={[
-                                    styles.taskText,
-                                    item.completed && styles.completedTask,
+                                    styles.taskItem,
+                                    item.default ? styles.defaultTask : styles.userTask,
                                 ]}
                             >
-                                {item.text}
-                            </Text>
-                            {!item.default && (
-                                <TouchableOpacity
-                                    style={styles.deleteButton}
-                                    onPress={() => deleteTask(item.id, item.default)}
-                                >
-                                    <Ionicons name="trash" size={24} color="red" />
+                                <TouchableOpacity onPress={() => toggleTaskCompletion(item.id)}>
+                                    <Ionicons
+                                        name={
+                                            item.completed
+                                                ? "checkmark-circle"
+                                                : "radio-button-off"
+                                        }
+                                        size={24}
+                                        color={item.completed ? "green" : "gray"}
+                                    />
                                 </TouchableOpacity>
-                            )}
-                        </View>
-                    )}
-                />
-            </Collapsible>
+                                <Text
+                                    style={[
+                                        styles.taskText,
+                                        item.completed && styles.completedTask,
+                                    ]}
+                                >
+                                    {item.text}
+                                </Text>
+                                {!item.default && (
+                                    <TouchableOpacity
+                                        style={styles.deleteButton}
+                                        onPress={() => deleteTask(item.id, item.default)}
+                                    >
+                                        <Ionicons name="trash" size={24} color="red" />
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                        )}
+                    />
+                </Collapsible>
 
-            {/* 달성도 */}
-            <View style={styles.completionContainer}>
-                <Text style={styles.completionText}>달성도</Text>
-                <Progress.Circle
-                    size={150}
-                    progress={completionRate}
-                    showsText={true}
-                    formatText={() => `${Math.round(completionRate * 100)}%`}
-                    color="#007AFF"
-                    textStyle={styles.progressText}
-                    thickness={10}
-                    borderWidth={2}
-                    borderColor="#e0e0e0"
-                />
+                {/* 달성도 */}
+                <View style={styles.completionContainer}>
+                    <Text style={styles.completionText}>달성도</Text>
+                    <Progress.Circle
+                        size={150}
+                        progress={completionRate}
+                        showsText={true}
+                        formatText={() => `${Math.round(completionRate * 100)}%`}
+                        color="#007AFF"
+                        textStyle={styles.progressText}
+                        thickness={10}
+                        borderWidth={2}
+                        borderColor="#e0e0e0"
+                    />
+                </View>
             </View>
-        </View>
+        </LinearGradient>
     );
 };
 
 const styles = StyleSheet.create({
+    gradient: {
+        flex: 1,
+    },
     container: {
         flex: 1,
         padding: 20,
-        backgroundColor: "#f8f9fa",
     },
     headingText: {
         fontSize: 24,
         fontWeight: "bold",
-        color: "#007AFF",
+        color: "#000",
         marginBottom: 20,
         textAlign: "center",
     },
@@ -203,7 +210,7 @@ const styles = StyleSheet.create({
     taskItem: {
         flexDirection: "row",
         alignItems: "center",
-        justifyContent: "space-between", // 요소를 양쪽 끝으로 정렬
+        justifyContent: "space-between",
         padding: 15,
         borderWidth: 1,
         borderRadius: 10,

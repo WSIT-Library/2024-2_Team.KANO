@@ -8,7 +8,7 @@ const AacButton = ({ maxAacButtons, customAacButtons, setCustomAacButtons }) => 
 	const [modalVisible, setModalVisible] = useState(false);
 	const [newAacText, setNewAacText] = useState("");
 	const [selectedIcon, setSelectedIcon] = useState("add-circle-outline");
-	const position = useState(new Animated.ValueXY({ x: 50, y: 50 }))[0]; // 초기 위치 설정
+	const position = useState(new Animated.ValueXY({ x: 270, y: 90 }))[0]; // 초기 위치 설정
 
 	// PanResponder 정의
 	const panResponder = PanResponder.create({
@@ -93,14 +93,14 @@ const AacButton = ({ maxAacButtons, customAacButtons, setCustomAacButtons }) => 
 								style={styles.customButton} // 사용자 정의 버튼 스타일
 								onPress={() => Speech.speak(button.text, { language: "ko" })}
 							>
-								<Ionicons name={button.icon} size={30} color="black" />
+								<Ionicons name={button.icon} size={30} color="white" />
 								<Text style={styles.customButtonText}>{button.text}</Text>
 							</TouchableOpacity>
 						</View>
 					))}
 
 					<TouchableOpacity style={styles.aacButton} onPress={() => setModalVisible(true)}>
-						<Ionicons name="add-circle-outline" size={30} color="white" />
+						<Ionicons name="add-circle-outline" size={30} color="black" />
 						<Text style={styles.aacButtonText}>버튼 추가</Text>
 					</TouchableOpacity>
 				</>
@@ -164,29 +164,44 @@ const styles = StyleSheet.create({
 		zIndex: 1,
 	},
 	aacButton: {
-		backgroundColor: "#007AFF", // 딥 블루 (메인 버튼 색상)
+		backgroundColor: "#fff",
 		width: 80,
 		height: 80,
 		borderRadius: 50,
 		alignItems: "center",
 		justifyContent: "center",
 		marginBottom: 10,
+		shadowColor: "#000",
+		shadowOffset: { width: 0, height: 4 },
+		shadowOpacity: 0.25,
+		shadowRadius: 4.84,
+		elevation: 5,
+		borderWidth: 2,
+		borderColor: "#000",
 	},
 	aacButtonText: {
-		color: "white",
+		color: "black",
+		fontWeight: "bold",
 		fontSize: 16,
 	},
 	customButton: {
-		backgroundColor: "#ADD8E6", // 라이트 블루 (추가된 버튼 색상)
+		backgroundColor: "#000", 
 		width: 80,
 		height: 80,
 		borderRadius: 50,
 		alignItems: "center",
 		justifyContent: "center",
 		marginBottom: 10,
+		shadowColor: "#000",
+		shadowOffset: { width: 0, height: 4 },
+		shadowOpacity: 0.25,
+		shadowRadius: 4.84,
+		elevation: 5,
+		borderWidth: 2,
+		borderColor: "#fff",
 	},
 	customButtonText: {
-		color: "black",
+		color: "white",
 		fontSize: 14,
 	},
 	aacButtonContainer: {

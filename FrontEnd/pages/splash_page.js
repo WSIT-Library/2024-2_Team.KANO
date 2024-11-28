@@ -3,6 +3,7 @@ import { View, Image, StyleSheet } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import * as SecureStore from 'expo-secure-store';
 import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient'; // LinearGradient를 사용하려면 설치 필요
 
 export default function SplashScreenComponent() {
 	const navigation = useNavigation();
@@ -14,7 +15,7 @@ export default function SplashScreenComponent() {
 				await SplashScreen.preventAutoHideAsync();
 
 				// 주석: 튜토리얼을 다시 보기 위해 기존 설정값 제거
-				// let RestartTutorial = await SecureStore.deleteItemAsync('FinishedTutorial');
+				 let RestartTutorial = await SecureStore.deleteItemAsync('FinishedTutorial');
 
 				// FinishedTutorial 키 값 확인
 				let finishedTutorial = await SecureStore.getItemAsync('FinishedTutorial');
@@ -50,22 +51,24 @@ export default function SplashScreenComponent() {
 	}, []);
 
 	return (
-		<View style={styles.container}>
+		<LinearGradient
+			colors={['#E8DFF5', '#F5FFFA']} // 그라데이션 색상 설정
+			style={styles.container}
+		>
 			<Image source={require('../assets/logo.png')} style={styles.logo} />
-		</View>
+		</LinearGradient>
 	);
 }
 
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: '#00BCD4',
 		justifyContent: 'center',
 		alignItems: 'center',
 	},
 	logo: {
-		width: 100,
-		height: 100,
+		width: 300,
+		height: 300,
 		resizeMode: 'contain',
 	},
 });

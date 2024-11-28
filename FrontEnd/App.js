@@ -13,43 +13,44 @@ import SignupPage from "./pages/signup_page";
 import SplashScreenComponent from './pages/splash_page';
 import TutorialPage from "./pages/tutorial_page";
 import { VoiceProvider } from "./Context";
+import Toast from 'react-native-toast-message';
 
 const Stack = createStackNavigator();
 
 const App = () => {
-   return (
-      // VoiceProvider로 전체 앱을 감싸서 컨텍스트를 모든 컴포넌트에 제공
-      <VoiceProvider>
-         <NavigationContainer>
-            <Stack.Navigator initialRouteName="Splash"> 
-               <Stack.Screen
-                  name="Splash"
-                  component={SplashScreenComponent}
-                  options={{ headerShown: false }}
-               />
-               <Stack.Screen
-                  name="Login"
-                  component={LoginPage}
-                  options={{ headerShown: false }}
-               />
-               <Stack.Screen
-                  name="Signup"
-                  component={SignupPage}
-                  options={{ headerShown: false }}
-               />
-               <Stack.Screen
-                  name="Home"
-                  component={HomePage}
-                  options={{ headerShown: false }}
-               />
-               <Stack.Screen name="Tutorial" component={TutorialPage} options={{ headerShown: false }} />
-               <Stack.Screen name="Chatbot" component={ChatbotPage} />
-               <Stack.Screen name="Date" component={DatePage} />
-               <Stack.Screen name="CalendarPage" component={CalendarPage} />
-            </Stack.Navigator>
-         </NavigationContainer>
-      </VoiceProvider>
-   );
+	return (
+		// VoiceProvider로 전체 앱을 감싸서 컨텍스트를 모든 컴포넌트에 제공
+		<VoiceProvider>
+			<NavigationContainer>
+				<Stack.Navigator initialRouteName="Splash">
+					<Stack.Screen
+						name="Splash"
+						component={SplashScreenComponent}
+						options={{ headerShown: false }}
+					/>
+					<Stack.Screen
+						name="Login"
+						component={LoginPage}
+						options={{ headerShown: false }}
+					/>
+					<Stack.Screen
+						name="Signup"
+						component={SignupPage}
+						options={{ headerShown: false }}
+					/>
+					<Stack.Screen
+						name="Home"
+						component={HomePage}
+						options={{ headerShown: false }}
+					/>
+					<Stack.Screen name="Tutorial" component={TutorialPage} options={{ headerShown: false }} />
+					<Stack.Screen name="Chatbot" component={ChatbotPage} />
+					<Stack.Screen name="Date" component={DatePage} />
+					<Stack.Screen name="CalendarPage" component={CalendarPage} />
+				</Stack.Navigator>
+			</NavigationContainer>
+		</VoiceProvider>
+	);
 };
 
 export default App;

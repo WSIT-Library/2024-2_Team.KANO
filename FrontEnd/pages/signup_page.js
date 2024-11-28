@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Keyboard, TouchableWithoutFeedback, KeyboardAvoidingView, Platform } from "react-native";
+import { Text, TextInput, TouchableOpacity, StyleSheet, Alert, Keyboard, TouchableWithoutFeedback, KeyboardAvoidingView, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
+import { LinearGradient } from "expo-linear-gradient"; // LinearGradient 추가
+import { DOMAIN, TIMEOUT } from "../utils/service_info";
 
 const SignupPage = () => {
   const [username, setUsername] = useState("");
@@ -21,7 +23,7 @@ const SignupPage = () => {
     }
 
     try {
-      const response = await axios.post(`${DOMAIN}/auth/signup`, {username, password,}, { timeout: TIMEOUT }); // DOMAIN, TIMEOUT 사용
+      const response = await axios.post(`${DOMAIN}/auth/signup`, { username, password }, { timeout: TIMEOUT });
       const data = response.data;
 
       if (data.StatusCode === 201) {
@@ -42,42 +44,44 @@ const SignupPage = () => {
   return (
     <TouchableWithoutFeedback onPress={dismissKeyboard}>
       <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-        <Text style={styles.title}>회원가입</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="사용자 이름"
-          placeholderTextColor="#888"
-          value={username}
-          onChangeText={setUsername}
-          returnKeyType="next"
-          onSubmitEditing={() => Keyboard.dismiss()}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="비밀번호"
-          placeholderTextColor="#888"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-          returnKeyType="next"
-          onSubmitEditing={() => Keyboard.dismiss()}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="비밀번호 확인"
-          placeholderTextColor="#888"
-          secureTextEntry
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          returnKeyType="done"
-          onSubmitEditing={handleSignup}
-        />
-        <TouchableOpacity style={styles.button} onPress={handleSignup}>
-          <Text style={styles.buttonText}>회원가입</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-          <Text style={styles.link}>로그인</Text>
-        </TouchableOpacity>
+        <LinearGradient colors={["#E8DFF5", "#F5FFFA"]} style={styles.gradient}>
+          <Text style={styles.title}>회원가입</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="사용자 이름"
+            placeholderTextColor="#888"
+            value={username}
+            onChangeText={setUsername}
+            returnKeyType="next"
+            onSubmitEditing={() => Keyboard.dismiss()}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="비밀번호"
+            placeholderTextColor="#888"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+            returnKeyType="next"
+            onSubmitEditing={() => Keyboard.dismiss()}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="비밀번호 확인"
+            placeholderTextColor="#888"
+            secureTextEntry
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            returnKeyType="done"
+            onSubmitEditing={handleSignup}
+          />
+          <TouchableOpacity style={styles.button} onPress={handleSignup}>
+            <Text style={styles.buttonText}>회원가입</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+            <Text style={styles.link}>로그인</Text>
+          </TouchableOpacity>
+        </LinearGradient>
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );
@@ -86,16 +90,18 @@ const SignupPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  gradient: {
+    flex: 1,
     justifyContent: "center",
     padding: 20,
-    backgroundColor: "#e6f7ff",
   },
   title: {
     fontSize: 28,
     fontWeight: "bold",
     marginBottom: 20,
     textAlign: "center",
-    color: "#007AFF",
+    color: "#000",
   },
   input: {
     borderWidth: 1,

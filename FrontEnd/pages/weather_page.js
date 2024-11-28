@@ -7,6 +7,7 @@ import * as SecureStore from "expo-secure-store";
 import axios from "axios";
 import SunCalc from "suncalc";
 import { DOMAIN } from "../utils/service_info";
+import weatherStats from "../utils/weather_stats.json"; // JSON 파일 import
 
 export default function WeatherPage() {
 	const [weatherData, setWeatherData] = useState(null);
@@ -17,6 +18,14 @@ export default function WeatherPage() {
 	const [loading, setLoading] = useState(true);
 	const [genAiText, setGenAiText] = useState("");
 
+	const translateWeather = (key) => {
+		const lowerKey = key.toLowerCase();
+		const translations = Object.fromEntries(
+		  Object.entries(weatherStats).map(([k, v]) => [k.toLowerCase(), v])
+		);
+		return translations[lowerKey] || key; // 번역이 없으면 원래 값 반환
+	};
+	
 	useEffect(() => {
         (async () => {
             try {
@@ -59,7 +68,7 @@ export default function WeatherPage() {
                     lon: longitude,
                 });
                 setWeatherData(weatherResponse.data.message.weather_data);
-
+				
                 // 3시간 단위 날씨 데이터 요청
                 const hourlyResponse = await axios.post(`${DOMAIN}/weather/3hourly`, {
                     user_uuid: userUuid,
@@ -141,7 +150,7 @@ export default function WeatherPage() {
 						<Text style={styles.location}>{locationData}</Text>
 						<Image source={{ uri: iconUrl }} style={styles.weatherIcon} />
 						<Text style={styles.temperature}>{convertToCelsius(temp)}°</Text>
-						<Text style={styles.weatherCondition}>{weather.description}</Text>
+						<Text style={styles.weatherCondition}>{translateWeather(weather.main)}</Text>
 						<Text style={styles.temperatureInfo}>
 							최고 {convertToCelsius(temp_max)}° / 최저 {convertToCelsius(temp_min)}°
 						</Text>

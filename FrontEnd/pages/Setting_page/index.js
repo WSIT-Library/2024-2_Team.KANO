@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, ToastAndroid } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DropDownPicker from 'react-native-dropdown-picker';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { VoiceContext } from '../../Context';
-import { DOMAIN, TIMEOUT } from "../../utils/service_info"; // 필요한 변수만 가져오기
+import { DOMAIN, TIMEOUT } from '../../utils/service_info';
 
 const DEFAULT_VOICE = 'ko-KR-InJoonNeural';
 
@@ -37,7 +38,7 @@ const SettingsPage = () => {
           .filter(voice => voice.Locale === 'ko-KR' && voice.ShortName !== 'ko-KR-HyunsuNeural')
           .map(voice => ({
             label: formatVoiceLabel(voice),
-            value: voice.ShortName
+            value: voice.ShortName,
           }));
 
         setItems(koVoices);
@@ -61,7 +62,6 @@ const SettingsPage = () => {
   };
 
   const handleValueChange = (value) => {
-    console.log('Selected value:', value);
     if (value) {
       setCurrentValue(value);
       setIsSaved(false);
@@ -85,27 +85,28 @@ const SettingsPage = () => {
 
   const handleLogout = async () => {
     try {
-      const userUuid = await SecureStore.getItemAsync("user_uuid");
+      const userUuid = await SecureStore.getItemAsync('user_uuid');
       if (!userUuid) {
-        Alert.alert("오류", "로그인 상태가 아닙니다.");
+        Alert.alert('오류', '로그인 상태가 아닙니다.');
         return;
       }
 
-      const response = await axios.post(`${DOMAIN}/auth/logout`, { user_uuid: userUuid }, { timeout: TIMEOUT }); // DOMAIN, TIMEOUT 사용
-      
+      const response = await axios.post(
+        `${DOMAIN}/auth/logout`,
+        { user_uuid: userUuid },
+        { timeout: TIMEOUT }
+      );
+
       if (response.data.StatusCode === 200) {
-        const username = response.data.username; // 서버 응답에서 username 받아오기
-        console.log(`로그아웃 성공 - 유저 이름: ${username}, UUID: ${userUuid}`);
-        
-        await SecureStore.deleteItemAsync("user_uuid");
-        Alert.alert("알림", "로그아웃되었습니다.");
-        navigation.replace("Login");
+        await SecureStore.deleteItemAsync('user_uuid');
+        ToastAndroid.show('로그아웃되었습니다.', ToastAndroid.SHORT);
+        navigation.replace('Login');
       } else {
-        Alert.alert("로그아웃 실패", response.data.message);
+        Alert.alert('로그아웃 실패', response.data.message);
       }
     } catch (error) {
-      console.error("Logout error:", error);
-      Alert.alert("알림", "서버와 연결할 수 없습니다.");
+      console.error('Logout error:', error);
+      Alert.alert('알림', '서버와 연결할 수 없습니다.');
     }
   };
 
@@ -118,68 +119,84 @@ const SettingsPage = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>TTS 목소리 변경</Text>
-      <View style={styles.pickerContainer}>
-        <DropDownPicker
-          open={open}
-          value={currentValue}
-          items={items}
-          setOpen={setOpen}
-          setValue={setCurrentValue}
-          setItems={setItems}
-          onChangeValue={handleValueChange}
-          placeholder="목소리를 선택하세요"
-          style={styles.picker}
-          dropDownContainerStyle={styles.dropDownContainer}
-          listMode="SCROLLVIEW"
-          scrollViewProps={{
-            nestedScrollEnabled: true,
-          }}
-          zIndex={3000}
-          zIndexInverse={1000}
-        />
-      </View>
+    <LinearGradient colors={['#E8DFF5', '#F5FFFA']} style={styles.gradient}>
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.sectionTitle}>설정</Text>
+        <View style={styles.section}>
+          <Text style={styles.title}>TTS 목소리 변경</Text>
+          <DropDownPicker
+            open={open}
+            value={currentValue}
+            items={items}
+            setOpen={setOpen}
+            setValue={setCurrentValue}
+            setItems={setItems}
+            onChangeValue={handleValueChange}
+            placeholder="목소리를 선택하세요"
+            style={styles.picker}
+            dropDownContainerStyle={styles.dropDownContainer}
+            listMode="SCROLLVIEW"
+            scrollViewProps={{
+              nestedScrollEnabled: true,
+            }}
+            zIndex={3000}
+            zIndexInverse={1000}
+          />
+          <TouchableOpacity
+            style={[
+              styles.saveButton,
+              isSaved && styles.savedButton,
+              !currentValue && styles.disabledButton,
+            ]}
+            onPress={saveVoiceSetting}
+            disabled={isSaved || !currentValue}
+          >
+            <Text style={styles.saveButtonText}>{isSaved ? '저장됨' : '설정 저장'}</Text>
+          </TouchableOpacity>
+        </View>
 
-      <TouchableOpacity 
-        style={[
-          styles.saveButton, 
-          isSaved && styles.savedButton,
-          !currentValue && styles.disabledButton
-        ]} 
-        onPress={saveVoiceSetting}
-        disabled={isSaved || !currentValue}
-      >
-        <Text style={styles.saveButtonText}>
-          {isSaved ? '저장됨' : '설정 저장'}
-        </Text>
-      </TouchableOpacity>
-
-      {/* 로그아웃 버튼 추가 */}
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutButtonText}>로그아웃</Text>
-      </TouchableOpacity>
-    </SafeAreaView>
+        <View style={styles.section}>
+          <Text style={styles.title}>계정 관리</Text>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Text style={styles.logoutButtonText}>로그아웃</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#f0f4f8',
   },
-  title: {
+  sectionTitle: {
     fontSize: 28,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginVertical: 30,
+    marginBottom: 30,
     color: '#333',
   },
-  pickerContainer: {
-    marginTop: 20,
+  section: {
     marginBottom: 40,
-    zIndex: 2000,
+    padding: 15,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#555',
   },
   picker: {
     borderColor: '#007AFF',
@@ -212,11 +229,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   logoutButton: {
     backgroundColor: '#FF3B30',
     paddingVertical: 15,
@@ -229,6 +241,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#fff',
     fontWeight: 'bold',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

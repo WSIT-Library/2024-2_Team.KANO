@@ -3,6 +3,7 @@
 		"name": "chatbot-app",
 		"slug": "chatbot-app",
 		"version": "1.0.0",
+		"entryPoint": "./node_modules/expo/AppEntry.js",
 		"splash": {
 			"image": "./assets/logo.png",
 			"resizeMode": "contain",
