@@ -5,21 +5,65 @@ import { useTTS } from './hooks/useTTS';
 import { useSTT } from './hooks/useSTT';
 import axios from 'axios';
 import { Ionicons } from '@expo/vector-icons';
+import { DOMAIN, TIMEOUT } from "../../utils/service_info";
 import * as SecureStore from "expo-secure-store";
 import Markdown from 'react-native-markdown-display';
 import Toast from 'react-native-toast-message';
 
-// 날짜 포맷 함수
-const formatDate = (dateString) => {
+const formatChatRoomDate = (dateString) => {
 	const date = new Date(dateString);
-	const year = date.getFullYear();
 	const month = (`0${date.getMonth() + 1}`).slice(-2);
 	const day = (`0${date.getDate()}`).slice(-2);
 	const hours = (`0${date.getHours()}`).slice(-2);
 	const minutes = (`0${date.getMinutes()}`).slice(-2);
-	const seconds = (`0${date.getSeconds()}`).slice(-2);
-	return `${year}년 ${month}월 ${day}일 ${hours}시 ${minutes}분 ${seconds}초`;
+	return `${month}월 ${day}일 ${hours}시 ${minutes}분`;
 };
+
+const formatChatTitle = (text) => {
+	if (!text) return '제목 없음';
+	if (text.length > 6) {
+		return `${text.slice(0, 6)}...`;
+	}
+	return text;
+};
+
+const milestoneMap = {
+	3: 24,
+	5: 25,
+	10: 26,
+	15: 27,
+	23: 28,
+	30: 29,
+	40: 30,
+	50: 31
+};
+
+const messageMilestoneMap = {
+	1: 19,
+	10: 20,
+	20: 21,
+	30: 22,
+	50: 23
+};
+
+// SecureStore에 값 설정
+async function secureSetItem(key, value) {
+	try {
+		await SecureStore.setItemAsync(key, value);
+	} catch (err) {
+		console.error(`Error setting ${key}:`, err);
+	}
+}
+
+// SecureStore에서 값 가져오기
+async function secureGetItem(key) {
+	try {
+		return await SecureStore.getItemAsync(key);
+	} catch (err) {
+		console.error(`Error getting ${key}:`, err);
+		return null;
+	}
+}
 
 const ChatbotPage = () => {
 	const { speak, stop, isSpeaking } = useTTS();
@@ -53,17 +97,46 @@ const ChatbotPage = () => {
 		}).start();
 	};
 
-	const loadChatRooms = async () => {
+	const getFirstMessage = async (chat_uuid) => {
 		try {
-			const storedUuid = await SecureStore.getItemAsync("user_uuid");
-			const response = await axios.post('http://61.81.99.111:5000/chat/list', { user_uuid: storedUuid });
+			const storedUuid = await secureGetItem("user_uuid");
+			const response = await axios.post(`${DOMAIN}/chat/detail`, {
+				user_uuid: storedUuid,
+				chat_uuid,
+			}, { timeout: TIMEOUT });
 
 			if (response.data.StatusCode === 200) {
-				const chats = response.data.data.chats.map((chat) => ({
-					...chat,
-					last_message_at: formatDate(chat.last_message_at)
-				}));
-				setChatRooms(chats);
+				const chatHistory = response.data.data.chat_history;
+				if (chatHistory && chatHistory.length > 0) {
+					const firstMessage = chatHistory.find((message) => message.role === 'user');
+					return firstMessage ? firstMessage.parts : '제목 없음';
+				}
+			}
+			return '제목 없음';
+		} catch (error) {
+			console.error(`첫 번째 메시지 가져오기 오류 (${chat_uuid}):`, error);
+			return '제목 없음';
+		}
+	};
+
+	const loadChatRooms = async () => {
+		try {
+			const storedUuid = await secureGetItem("user_uuid");
+			const response = await axios.post(`${DOMAIN}/chat/list`, { user_uuid: storedUuid }, { timeout: TIMEOUT });
+
+			if (response.data.StatusCode === 200) {
+				const chats = response.data.data.chats;
+				const chatRoomsWithTitles = await Promise.all(
+					chats.map(async (chat) => {
+						const firstMessage = await getFirstMessage(chat.chat_uuid);
+						return {
+							...chat,
+							title: formatChatTitle(firstMessage),
+							last_message_at: formatChatRoomDate(chat.last_message_at),
+						};
+					})
+				);
+				setChatRooms(chatRoomsWithTitles);
 			}
 		} catch (error) {
 			console.error('채팅방 목록 로드 오류:', error);
@@ -72,8 +145,8 @@ const ChatbotPage = () => {
 
 	const loadChatHistory = async (chat_uuid) => {
 		try {
-			const storedUuid = await SecureStore.getItemAsync("user_uuid");
-			const response = await axios.post('http://61.81.99.111:5000/chat/detail', { user_uuid: storedUuid, chat_uuid });
+			const storedUuid = await secureGetItem("user_uuid");
+			const response = await axios.post(`${DOMAIN}/chat/detail`, { user_uuid: storedUuid, chat_uuid }, { timeout: TIMEOUT });
 			if (response.data.StatusCode === 200) {
 				setMessages(response.data.data.chat_history.map((item, index) => ({
 					id: index.toString(),
@@ -90,6 +163,33 @@ const ChatbotPage = () => {
 	const addChatRoom = async () => {
 		setMessages([{ id: '1', text: '원하시는 상황을 입력해주세요.', sender: 'bot' }]);
 		setSelectedChat(null);
+
+		try {
+			const storedUuid = await secureGetItem("user_uuid");
+			let countString = await secureGetItem("CountAddChatRoom");
+			let count = countString ? parseInt(countString, 10) : 0;
+			count += 1;
+			await secureSetItem("CountAddChatRoom", count.toString());
+
+			if (milestoneMap[count]) {
+				const challengeId = milestoneMap[count];
+				let archiveString = await secureGetItem("CompleteArchive");
+				let archiveValues = archiveString ? JSON.parse(archiveString) : [];
+				if (!archiveValues.includes(challengeId)) {
+					archiveValues.push(challengeId);
+					await secureSetItem("CompleteArchive", JSON.stringify(archiveValues));
+
+					await axios.post(`${DOMAIN}/challenge/register`, {
+						"user_uuid": storedUuid,
+						"challenge_id": challengeId
+					}, { timeout: TIMEOUT });
+				}
+			}
+
+		} catch (err) {
+			console.error('채팅방 생성 처리 오류:', err);
+		}
+
 		Toast.show({
 			type: 'success',
 			text1: '채팅방 생성',
@@ -99,8 +199,8 @@ const ChatbotPage = () => {
 
 	const deleteChatRoom = async (chat_uuid) => {
 		try {
-			const storedUuid = await SecureStore.getItemAsync("user_uuid");
-			await axios.post('http://61.81.99.111:5000/chat/delete', { user_uuid: storedUuid, chat_uuid });
+			const storedUuid = await secureGetItem("user_uuid");
+			await axios.post(`${DOMAIN}/chat/delete`, { user_uuid: storedUuid, chat_uuid }, { timeout: TIMEOUT });
 			loadChatRooms();
 			setMessages([{ id: '1', text: '원하시는 상황을 입력해주세요.', sender: 'bot' }]);
 			Toast.show({
@@ -113,18 +213,72 @@ const ChatbotPage = () => {
 		}
 	};
 
+	const handleMessageAchievement = async () => {
+		try {
+			const storedUuid = await secureGetItem("user_uuid");
+			let countString = await secureGetItem("CountAchievements");
+			let count = countString ? parseInt(countString, 10) : 0;
+
+			count += 1;
+			await secureSetItem("CountAchievements", count.toString());
+			
+			const afterCountString = await secureGetItem("CountAchievements");
+			console.log(`CountAchievements 저장 확인: ${afterCountString}`);
+
+			if (messageMilestoneMap[count]) {
+				const challengeId = messageMilestoneMap[count];
+				let archiveString = await secureGetItem("CompleteArchive");
+				let archiveValues = archiveString ? JSON.parse(archiveString) : [];
+
+				if (!archiveValues.includes(challengeId)) {
+					archiveValues.push(challengeId);
+					await secureSetItem("CompleteArchive", JSON.stringify(archiveValues));
+
+					const afterArchiveString = await secureGetItem("CompleteArchive");
+					console.log(`CompleteArchive 저장 확인: ${afterArchiveString}`);
+
+					await axios.post(`${DOMAIN}/challenge/register`, {
+						"user_uuid": storedUuid,
+						"challenge_id": challengeId
+					}, { timeout: TIMEOUT });
+				} else {
+
+				}
+			}
+		} catch (err) {
+			console.error('메시지 전송 도전과제 처리 오류:', err);
+			Toast.show({
+				type: 'error',
+				text1: '도전과제 처리 오류',
+				text2: `${err.message}`
+			});
+		}
+	};
+
 	const sendMessage = async () => {
 		Keyboard.dismiss();
 
 		if (inputText.trim()) {
 			const newMessage = { id: Date.now().toString(), text: inputText, sender: 'user' };
 			setMessages([...messages, newMessage]);
+
+			await handleMessageAchievement();
+
 			setInputText('');
 
 			try {
-				const storedUuid = await SecureStore.getItemAsync("user_uuid");
-				const response = await axios.post('http://61.81.99.111:5000/chat', { text: inputText, user_uuid: storedUuid, chat_uuid: selectedChat });
-				if (response.data && response.data.data && response.data.data.response) {
+				const storedUuid = await secureGetItem("user_uuid");
+				const response = await axios.post(`${DOMAIN}/chat`, {
+					text: inputText,
+					user_uuid: storedUuid,
+					chat_uuid: selectedChat
+				}, { timeout: TIMEOUT });
+
+				if (response.data && response.data.data) {
+					if (!selectedChat) {
+						setSelectedChat(response.data.data.chat_uuid);
+					}
+
 					const botResponseText = response.data.data.response;
 					const botResponse = { id: Date.now().toString(), text: '', sender: 'bot' };
 					setMessages((prevMessages) => [...prevMessages, botResponse]);
@@ -229,8 +383,8 @@ const ChatbotPage = () => {
 								renderItem={({ item }) => (
 									<View style={styles.chatRoomContainer}>
 										<TouchableOpacity style={styles.chatRoomButton} onPress={() => loadChatHistory(item.chat_uuid)}>
-											<Text style={styles.chatRoomTitle}>{item.first_message}</Text>
-											<Text style={styles.chatRoomDate}>{item.created_at}</Text>
+											<Text style={styles.chatRoomTitle}>{item.title}</Text>
+											<Text style={styles.chatRoomDate}>{item.last_message_at}</Text>
 										</TouchableOpacity>
 										<TouchableOpacity onPress={() => deleteChatRoom(item.chat_uuid)} style={styles.deleteButton}>
 											<Ionicons name="trash" size={24} color="red" />
@@ -243,7 +397,13 @@ const ChatbotPage = () => {
 
 					<TouchableWithoutFeedback onPress={Keyboard.dismiss}>
 						<View style={styles.inputContainer}>
-							<TextInput style={styles.textInput} value={inputText} onChangeText={setInputText} placeholder="메시지를 입력하세요" placeholderTextColor="#aaa" />
+							<TextInput
+								style={styles.textInput}
+								value={inputText}
+								onChangeText={setInputText}
+								placeholder="메시지를 입력하세요"
+								placeholderTextColor="#aaa"
+							/>
 							<TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
 								<Text style={styles.sendButtonText}>전송</Text>
 							</TouchableOpacity>
@@ -419,11 +579,6 @@ const styles = StyleSheet.create({
 		fontSize: 14,
 		marginTop: 5,
 		opacity: 0.8,
-	},
-	chatRoomText: {
-		color: '#fff',
-		fontSize: 20,
-		textAlign: 'center',
 	},
 	deleteButton: {
 		position: 'absolute',

@@ -12,6 +12,7 @@ import LoginPage from "./pages/login_page";
 import SignupPage from "./pages/signup_page";
 import SplashScreenComponent from './pages/splash_page';
 import TutorialPage from "./pages/tutorial_page";
+import AchievementsPage from "./pages/AchievementsPage";
 import { VoiceProvider } from "./Context";
 import Toast from 'react-native-toast-message';
 
@@ -47,6 +48,7 @@ const App = () => {
 					<Stack.Screen name="Chatbot" component={ChatbotPage} />
 					<Stack.Screen name="Date" component={DatePage} />
 					<Stack.Screen name="CalendarPage" component={CalendarPage} />
+					<Stack.Screen name="AchievementsPage" component={AchievementsPage} />
 				</Stack.Navigator>
 			</NavigationContainer>
 		</VoiceProvider>

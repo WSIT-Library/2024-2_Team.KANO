@@ -7,6 +7,7 @@ import DatePage from "./date_page/index";
 import SettingsPage from './Setting_page/index';
 import HomeScreen from './home_screen';
 import WeatherPage from './weather_page';
+import AchievementsPage from './AchievementsPage';
 
 const Tab = createBottomTabNavigator();
 
@@ -24,6 +25,8 @@ const HomePage = () => {
                         iconName = focused ? "calendar" : "calendar-outline";
                     } else if (route.name === "Weather") {
                         iconName = focused ? "cloud" : "cloud-outline";
+                    } else if (route.name === "AchievementsPage") {
+                        iconName = focused ? "trophy" : "trophy-outline";
                     } else if (route.name === "Settings") {
                         iconName = focused ? "settings" : "settings-outline";
                     }
@@ -53,6 +56,11 @@ const HomePage = () => {
                 name="Weather"
                 component={WeatherPage}
                 options={{ title: "날씨" }}
+            />
+            <Tab.Screen
+                name="AchievementsPage"
+                component={AchievementsPage}
+                options={{ title: "도전과제" }}
             />
             <Tab.Screen
                 name="Settings"

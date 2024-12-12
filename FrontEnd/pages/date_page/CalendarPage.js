@@ -1,19 +1,13 @@
 import React, { useEffect, useState } from "react";
-import {
-  StyleSheet,
-  View,
-  Text,
-  Button,
-  FlatList,
-  Alert,
-  Modal,
-  TextInput,
-} from "react-native";
+import { StyleSheet, View, Text, Button, FlatList, Alert, Modal, TextInput, } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Calendar } from "react-native-calendars";
 import * as CalendarAPI from "expo-calendar";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { LinearGradient } from "expo-linear-gradient"; // LinearGradient 추가
+import { LinearGradient } from "expo-linear-gradient";
+import { DOMAIN, TIMEOUT } from "../../utils/service_info";
+import * as SecureStore from 'expo-secure-store'; // SecureStore 추가
+import axios from 'axios'; // axios 추가
 
 export default function CalendarPage() {
   const [calendars, setCalendars] = useState([]);
@@ -27,13 +21,15 @@ export default function CalendarPage() {
   const [tempStartTime, setTempStartTime] = useState(new Date());
   const [tempEndTime, setTempEndTime] = useState(new Date());
 
+  // 특정 횟수에 대응하는 배열 (1, 5, 10, 20, 30, 50번 클릭될 때 추가할 값들)
+  const triggerCounts = [1, 5, 10, 20, 30, 50];
+  const correspondingValues = [5, 6, 7, 8, 9, 10];
+
   useEffect(() => {
     (async () => {
       const { status } = await CalendarAPI.requestCalendarPermissionsAsync();
       if (status === "granted") {
-        const calendarsData = await CalendarAPI.getCalendarsAsync(
-          CalendarAPI.EntityTypes.EVENT
-        );
+        const calendarsData = await CalendarAPI.getCalendarsAsync(CalendarAPI.EntityTypes.EVENT);
         setCalendars(calendarsData);
         if (calendarsData.length > 0) {
           setSelectedCalendarId(calendarsData[0].id);
@@ -48,14 +44,10 @@ export default function CalendarPage() {
   const loadEvents = async (calendarId) => {
     const start = new Date();
     const end = new Date();
-    end.setMonth(end.getMonth() + 1); // 다음 달로 설정
+    end.setMonth(end.getMonth() + 1);
 
-    const eventsData = await CalendarAPI.getEventsAsync(
-      [calendarId],
-      start,
-      end
-    );
-
+    const eventsData = await CalendarAPI.getEventsAsync([calendarId], start, end);
+    
     const groupedEvents = eventsData.reduce((acc, event) => {
       const date = event.startDate.split("T")[0];
       if (!acc[date]) {
@@ -64,7 +56,6 @@ export default function CalendarPage() {
       acc[date].push(event);
       return acc;
     }, {});
-
     setEvents(groupedEvents);
   };
 
@@ -84,16 +75,59 @@ export default function CalendarPage() {
     const endDate = new Date(selectedDate);
     endDate.setHours(endTime.getHours(), endTime.getMinutes());
 
-    await CalendarAPI.createEventAsync(selectedCalendarId, {
-      title: newEventTitle,
-      startDate,
-      endDate,
-      timeZone: "GMT",
-    });
+    try {
+      await CalendarAPI.createEventAsync(selectedCalendarId, {
+        title: newEventTitle,
+        startDate,
+        endDate,
+        timeZone: "Asia/Seoul",
+      });
 
-    setNewEventTitle("");
-    loadEvents(selectedCalendarId);
-    setModalVisible(false);
+      // SecureStore에서 CountAddDate 값 읽기
+      let countStr = await SecureStore.getItemAsync("CountAddDate");
+      let count = countStr ? parseInt(countStr, 10) : 0;
+      count += 1;
+      await SecureStore.setItemAsync("CountAddDate", count.toString());
+
+      // 특정 횟수에 해당하는지 확인
+      const index = triggerCounts.indexOf(count);
+      if (index !== -1) {
+        // CompleteArchive 키에서 기존 배열 가져오기
+        let archiveStr = await SecureStore.getItemAsync('CompleteArchive');
+        let archiveArr = archiveStr ? JSON.parse(archiveStr) : [];
+        // 해당 횟수에 해당하는 값 추가
+        const challengeId = correspondingValues[index];
+        archiveArr.push(challengeId);
+        await SecureStore.setItemAsync("CompleteArchive", JSON.stringify(archiveArr));
+
+        // 이후 /challenge/register 요청 보내기 (axios 사용)
+        const user_uuid = await SecureStore.getItemAsync("user_uuid");
+        if (user_uuid) {
+          const response = await axios.post(
+            `${DOMAIN}/challenge/register`,
+            { user_uuid, challenge_id: challengeId },
+            { headers: { "Content-Type": "application/json" } },
+            { timeout: TIMEOUT }
+          );
+
+          if (response.data.StatusCode === 200) {
+            Alert.alert("성공", "도전과제가 성공하였습니다!");
+          } else {
+            Alert.alert("알림", "서버 응답을 확인해주세요.");
+          }
+        } else {
+          Alert.alert("오류", "user_uuid가 없습니다.");
+        }
+      }
+
+
+      setNewEventTitle("");
+      loadEvents(selectedCalendarId);
+      setModalVisible(false);
+    } catch (error) {
+      console.error(error);
+      Alert.alert("이벤트 생성 오류", "이벤트를 생성하는 중 오류가 발생했습니다.");
+    }
   };
 
   const handleStartTimeChange = (event, selectedDate) => {
@@ -183,7 +217,7 @@ export default function CalendarPage() {
 
         <Text style={styles.subHeader}>이번 달 일정</Text>
         <FlatList
-          data={Object.values(events).flat()} // 모든 이벤트를 한 리스트로 만들기
+          data={Object.values(events).flat()}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <View style={styles.eventItem}>

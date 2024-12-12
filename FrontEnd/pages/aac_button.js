@@ -1,7 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, TextInput, Modal, StyleSheet, Alert, PanResponder, Animated } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { DOMAIN, TIMEOUT } from "../utils/service_info";
 import * as Speech from "expo-speech";
+import * as SecureStore from "expo-secure-store";
+import axios from "axios";
+
 
 const AacButton = ({ maxAacButtons, customAacButtons, setCustomAacButtons }) => {
 	const [aacVisible, setAacVisible] = useState(false);
@@ -9,6 +13,18 @@ const AacButton = ({ maxAacButtons, customAacButtons, setCustomAacButtons }) => 
 	const [newAacText, setNewAacText] = useState("");
 	const [selectedIcon, setSelectedIcon] = useState("add-circle-outline");
 	const position = useState(new Animated.ValueXY({ x: 270, y: 90 }))[0]; // 초기 위치 설정
+	const [userUUID, setUserUUID] = useState("");
+	const [archiveValues, setArchiveValues] = useState([]);
+	const clickMilestones = [1, 3, 5, 7, 10, 15, 20, 30];
+	const archiveNumbers = [32, 33, 34, 35, 36, 37, 38, 39];
+
+	useEffect(() => {
+		const getUserUUID = async () => {
+			const uuid = await SecureStore.getItemAsync("user_uuid");
+			setUserUUID(uuid);
+		};
+		getUserUUID();
+	}, []);
 
 	// PanResponder 정의
 	const panResponder = PanResponder.create({
@@ -34,17 +50,48 @@ const AacButton = ({ maxAacButtons, customAacButtons, setCustomAacButtons }) => 
 		setAacVisible(!aacVisible);
 	};
 
-	const addCustomAacButton = () => {
+	const addCustomAacButton = async () => {
 		if (newAacText.trim() && customAacButtons.length < maxAacButtons) {
 			setCustomAacButtons([
 				...customAacButtons,
 				{ id: Date.now().toString(), text: newAacText, icon: selectedIcon },
 			]);
+
+			let count = await SecureStore.getItemAsync("CountAddAACButton");
+			count = count ? parseInt(count) + 1 : 1;
+			await SecureStore.setItemAsync("CountAddAACButton", count.toString());
+
+			if (clickMilestones.includes(count)) {
+				const index = clickMilestones.indexOf(count);
+				const newArchiveValue = archiveNumbers[index];
+
+				let currentArchive = await SecureStore.getItemAsync("CompleteArchive");
+				currentArchive = currentArchive ? JSON.parse(currentArchive) : [];
+				if (!currentArchive.includes(newArchiveValue)) {
+					const updatedArchive = [...currentArchive, newArchiveValue];
+					await SecureStore.setItemAsync("CompleteArchive", JSON.stringify(updatedArchive));
+					setArchiveValues(updatedArchive);
+					await sendChallengeData(updatedArchive);
+				}
+			}
+
 			setNewAacText("");
 			setSelectedIcon("add-circle-outline");
 			setModalVisible(false);
 		} else {
 			Alert.alert("최대 5개의 버튼만 추가할 수 있습니다.");
+		}
+	};
+
+	const sendChallengeData = async (updatedArchive) => {
+		try {
+			const response = await axios.post(`${DOMAIN}/challenge/register`, {
+				user_uuid: userUUID,
+				challenge_id: updatedArchive,
+			},{ timeout: TIMEOUT } );
+			console.log("도전과제 등록 성공:", response.data);
+		} catch (error) {
+			//console.error("도전과제 등록 실패:", error);
 		}
 	};
 
