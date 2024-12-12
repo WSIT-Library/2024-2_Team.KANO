@@ -114,12 +114,15 @@ function AchievementsPage() {
         completed.includes(challenge.id)
     ).length;
 
+    // Precise progress calculation with multiple safeguards
     const calculateProgress = () => {
         if (totalAchievements === 0) return 0;
-
-        // 진행도를 0 ~ 1 사이로 반환
-        const progress = completedAchievements / totalAchievements;
-        return progress > 1 ? 1 : progress;
+        
+        // Use Math.round to ensure precise decimal representation
+        const progress = Math.round((completedAchievements * 100 / totalAchievements) * 100) / 10000;	// 왜인지 모르지만 100으로 나누면 30 처럼 1을 초과함;;
+        
+        // Ensure the value is between 0 and 1
+        return progress;
     };
 
     const progressPercentage = calculateProgress();

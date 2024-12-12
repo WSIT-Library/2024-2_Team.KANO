@@ -179,7 +179,7 @@ export default function WeatherPage() {
         }
 
       } catch (error) {
-        console.error("Error fetching data:", error);
+        //console.error("Error fetching data:", error);
         if (error.response) {
           console.log("[DEBUG] 에러 응답 상태:", error.response.status);
           console.log("[DEBUG] 에러 응답 데이터:", error.response.data);
